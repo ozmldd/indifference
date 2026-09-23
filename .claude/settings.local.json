@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Copy-Item -Path \"C:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_mixer-3.2.4\\\\x86_64-w64-mingw32\\\\bin\\\\SDL3_mixer.dll\" -Destination \"C:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\gametest1.cpp\\\\SDL3_mixer.dll\" -Force)"
+    ]
+  }
+}

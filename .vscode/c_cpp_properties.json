@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "Win32",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "C:/Users/chris/OneDrive/Desktop/w64devkit/include",
+        "${workspaceFolder}/SDL3_image-3.4.4/x86_64-w64-mingw32/include",
+        "${workspaceFolder}/SDL3_mixer-3.2.4/x86_64-w64-mingw32/include",
+        "${workspaceFolder}/indifference/SDL3_image-3.4.4/x86_64-w64-mingw32/include"
+      ],
+      "compilerPath": "C:/Users/chris/OneDrive/Desktop/w64devkit/bin/g++.exe",
+      "intelliSenseMode": "windows-gcc-x64"
+    }
+  ],
+  "version": 4
+}

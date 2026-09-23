@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"$env:USERPROFILE\\\\.claude\\\\projects\" -Directory | Select-Object Name)",
+      "PowerShell(Get-ChildItem \"$env:USERPROFILE\\\\.claude\\\\projects\\\\c--Users-erick-OneDrive-Desktop-c--\" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 20 Name, LastWriteTime, Length)",
+      "Read(//c/Users/erick/.claude/projects/c--Users-erick-OneDrive-Desktop-c--/**)",
+      "Read(//c/Users/erick/Downloads/w64devkit/include/**)",
+      "PowerShell(cd \"c:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\indifference\"; .\\\\indifferenceDemo.exe; Write-Output \"EXIT CODE: $LASTEXITCODE\")",
+      "Bash(/c/Users/erick/Downloads/w64devkit/bin/g++.exe -std=c++20 '-IC:\\\\Users\\\\erick\\\\Downloads\\\\w64devkit\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_image-3.4.4\\\\x86_64-w64-mingw32\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_mixer-3.2.4\\\\x86_64-w64-mingw32\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\glm-1.0.1-light' -c indifferenceDemo.cpp -o /tmp/out.o)",
+      "Bash(echo \"EXIT:$?\")",
+      "Read(//tmp/**)",
+      "Bash(/c/Users/erick/Downloads/w64devkit/bin/g++.exe -fdiagnostics-color=always -g '-IC:\\\\Users\\\\erick\\\\Downloads\\\\w64devkit\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_image-3.4.4\\\\x86_64-w64-mingw32\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\indifference\\\\SDL3_image-3.4.4\\\\x86_64-w64-mingw32\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_mixer-3.2.4\\\\x86_64-w64-mingw32\\\\include' '-IC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\glm-1.0.1-light' '-LC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\indifference\\\\SDL3_image-3.4.4\\\\x86_64-w64-mingw32\\\\lib' '-LC:\\\\Users\\\\erick\\\\Downloads\\\\w64devkit\\\\lib' '-LC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_image-3.4.4\\\\x86_64-w64-mingw32\\\\lib' '-LC:\\\\Users\\\\erick\\\\OneDrive\\\\Desktop\\\\c++\\\\SDL3_mixer-3.2.4\\\\x86_64-w64-mingw32\\\\lib' indifferenceDemo.cpp -lSDL3 -lSDL3_image -lSDL3_mixer -o indifferenceDemo_test.exe)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\erick\\OneDrive\\Desktop\\c++\\gametest1.cpp\\SDL3_image-3.4.4",
+      "c:\\Users\\erick\\OneDrive\\Desktop\\c++"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "cmake.sourceDirectory": "${workspaceFolder}/glm-1.0.1-light/glm",
+    "C_Cpp.errorSquiggles": "enabled"
+}
