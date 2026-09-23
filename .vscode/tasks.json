@@ -3,17 +3,17 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\bin\\g++.exe",
+            "command": "${env:W64DEVKIT}\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "-I\"C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\include\"",
+                "-I\"${env:W64DEVKIT}\\include\"",
                 "-I\"${workspaceFolder}\\SDL3_image-3.4.4\\x86_64-w64-mingw32\\include\"",
                 "-I\"${workspaceFolder}\\indifference\\SDL3_image-3.4.4\\x86_64-w64-mingw32\\include\"",
                 "-I\"${workspaceFolder}\\SDL3_mixer-3.2.4\\x86_64-w64-mingw32\\include\"",
                 "-I\"${workspaceFolder}\\glm-1.0.1-light\"",
                 "-L\"${workspaceFolder}\\indifference\\SDL3_image-3.4.4\\x86_64-w64-mingw32\\lib\"",
-                "-L\"C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\lib\"",
+                "-L\"${env:W64DEVKIT}\\lib\"",
                 "-L\"${workspaceFolder}\\SDL3_image-3.4.4\\x86_64-w64-mingw32\\lib\"",
                 "-L\"${workspaceFolder}\\SDL3_mixer-3.2.4\\x86_64-w64-mingw32\\lib\"",
                 "${file}",
@@ -26,7 +26,7 @@
             "options": {
                 "cwd": "${fileDirname}",
                 "env": {
-                    "PATH": "C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\bin;C:\\Windows\\System32;C:\\Windows"
+                    "PATH": "${env:W64DEVKIT}\\bin;C:\\Windows\\System32;C:\\Windows"
                 }
             },
             "problemMatcher": [

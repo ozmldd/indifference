@@ -13,12 +13,12 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\bin;C:\\Windows\\System32;C:\\Windows"
+                    "value": "${env:W64DEVKIT}\\bin;C:\\Windows\\System32;C:\\Windows"
                 }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "C:\\Users\\chris\\OneDrive\\Desktop\\w64devkit\\bin\\gdb.exe",
+            "miDebuggerPath": "${env:W64DEVKIT}\\bin\\gdb.exe",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
