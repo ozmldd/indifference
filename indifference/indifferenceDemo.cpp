@@ -245,7 +245,8 @@ void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float delt
 void InGameMenu(const SDLState &state, GameState &gs, const Resources &res, GameObject &obj);
 void resetGame(const SDLState &state, GameState &gs, const Resources &res);
 void warning(const SDLState &state, GameState &gs, float deltaTime);
-void flashingThing(const SDLState &state, GameState &gs, float deltaTime);
+void save(const SDLState &state, GameState &gs, const Resources &res);
+
 int main (int argc, char *argv[])
 {   
     SDLState state;
@@ -477,6 +478,7 @@ int main (int argc, char *argv[])
                         float base = SDL_max(60.0f - (gs.levelNum * 8.0f), 25.0f);
                         float variation = base * 0.3f;
                         gs.nextFlash = base - variation + (SDL_randf() * variation * 2.0f);
+                        save(state, gs, res);
                     }
                 }
             }
@@ -631,7 +633,6 @@ int main (int argc, char *argv[])
         else if (gs.mode == gameMode::credits)
         {
             Credits(state, gs, 40.0f, deltaTime, res);
-            resetGame(state, gs, res);
         }
         else if (gs.mode == gameMode::warning)
         {
@@ -1479,5 +1480,6 @@ void warning(const SDLState &state, GameState &gs, float deltaTime)
 }
 void save(const SDLState &state, GameState &gs, const Resources &res)
 {
+    std::cout<<SDL_GetPrefPath("indie indie studio studio", "indifference");
 
 }
