@@ -20,7 +20,7 @@ enum class creditState
 
 enum class gameMode
 {
-    warning, title, menu, playing, paused, credits, flash
+    warning, title, optionMenu, playing, paused, credits, flash
 };
 
 struct playerData

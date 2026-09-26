@@ -7,6 +7,7 @@
 #include <array>
 #include <format>
 #include <iostream>
+#include <fstream>
 #include "gameobject.h"
 
                     #define SDL_BUTTON_LEFT     1
@@ -184,7 +185,7 @@ struct holder
     menuButtonn.texture = res.textureButton;
     menuButtonn.ButtonId = 1;
     gs.menuButtons.push_back(menuButtonn);
-
+    //ingame option button
     Button optionButton;
     optionButton.rect = SDL_FRect
     {
@@ -195,7 +196,7 @@ struct holder
     optionButton.ButtonId = 10;
     gs.menuButtons.push_back(optionButton);
 
-    //game Menu
+    //In-game Menu
     ButtonGame menuIG;
     menuIG.rectt = SDL_FRect
     {
@@ -203,9 +204,10 @@ struct holder
         .w = 30, .h = 40,
     };
     menuIG.texture = res.textureMenu;
-    menuIG.ButtonId = 20;
+    menuIG.ButtonId = 20; //use accounting trick to number In-game and Out of game
     gs.gameButtons.push_back(menuIG);
 
+    //go back to game
     ButtonGame menuBack;
     menuBack.rectt = SDL_FRect
     {
@@ -216,6 +218,16 @@ struct holder
     menuBack.ButtonId = 21;
     gs.gameButtons.push_back(menuBack);
 
+    ButtonGame BTM; //back to menu
+    BTM.rectt = SDL_FRect
+    {
+        .x = 210, .y = 160,
+        .w = 200, .h = 40,
+    };
+    BTM.texture = res.textureButton;
+    BTM.ButtonId = 22;
+    gs.gameButtons.push_back(BTM);
+
     Slider slider;
     slider.texture = res.textureSlider;
     gs.slider.push_back(slider);
@@ -224,6 +236,7 @@ struct holder
     handle.texture = res.textureHandle;
     handle.handler.x = slider.slide.x + slider.value * (slider.slide.w - handle.handler.w);
     gs.handles.push_back(handle);
+
     }
 };
 
@@ -300,7 +313,7 @@ int main (int argc, char *argv[])
                 }
                 case SDL_EVENT_KEY_DOWN:
                 {
-                    if (event.key.scancode == SDL_SCANCODE_N && gs.mode == gameMode::playing &&
+                    if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing &&
                     gs.player().data.player.state == PlayerState::dialog)
                     {
                         dialogLine++;
@@ -323,6 +336,12 @@ int main (int argc, char *argv[])
                     {
                         gs.mode = gameMode::title;
                     }
+                    if(event.key.scancode == SDL_SCANCODE_X && gs.player().data.player.state == PlayerState::dialog && gs.mode == gameMode::playing)
+                    {
+                        dialogLine = 0;
+                        gs.player().data.player.state == PlayerState::idle;
+                        movementKeys = true;
+                    }
                     break;
                 }
                 case SDL_EVENT_KEY_UP:
@@ -340,7 +359,7 @@ int main (int argc, char *argv[])
                 }
                 case SDL_EVENT_MOUSE_MOTION:
                 {
-                    if(gs.mode == gameMode::menu || gs.mode == gameMode::paused)
+                    if(gs.mode == gameMode::optionMenu || gs.mode == gameMode::paused)
                     {
                         //volume slider for ingame and settings
                         if (gs.dragging)
@@ -363,7 +382,7 @@ int main (int argc, char *argv[])
                 {
                     SDL_FPoint click { event.button.x, event.button.y };
 
-                    if(gs.mode == gameMode::menu || gs.mode == gameMode::paused)
+                    if(gs.mode == gameMode::optionMenu || gs.mode == gameMode::paused)
                     {
                         //slider things
                         for (Handle &h : gs.handles)
@@ -375,7 +394,7 @@ int main (int argc, char *argv[])
                         }
                     }
                     //im the for loop that checks if it's pressed
-                    if(gs.mode == gameMode::menu || gs.mode == gameMode::title)
+                    if(gs.mode == gameMode::optionMenu || gs.mode == gameMode::title)
                     {
                     for(Button &btn :gs.menuButtons)
                     {
@@ -390,7 +409,7 @@ int main (int argc, char *argv[])
                             }
                             else if(btn.ButtonId == 1)
                             {
-                                gs.mode = gameMode::menu;
+                                gs.mode = gameMode::optionMenu;
 
                             }
                             else if (btn.ButtonId == 10)
@@ -415,6 +434,10 @@ int main (int argc, char *argv[])
                             else if(btn.ButtonId == 21 && gs.mode == gameMode::paused)
                             {
                                 gs.mode = gameMode::playing;
+                            }
+                            else if (btn.ButtonId == 22 && gs.mode == gameMode::paused)
+                            {
+                                gs.mode = gameMode::title;
                             }
                         }
                     }
@@ -478,7 +501,6 @@ int main (int argc, char *argv[])
                         float base = SDL_max(60.0f - (gs.levelNum * 8.0f), 25.0f);
                         float variation = base * 0.3f;
                         gs.nextFlash = base - variation + (SDL_randf() * variation * 2.0f);
-                        save(state, gs, res);
                     }
                 }
             }
@@ -537,10 +559,11 @@ int main (int argc, char *argv[])
                 gs.creditsY = 340; 
                 gs.creditsElapsed = 0.0f;
             }
+            
         }
 
         //menu screen stuff
-        else if (gs.mode == gameMode::menu)
+        else if (gs.mode == gameMode::optionMenu)
         {
 
             Button btn;
@@ -622,12 +645,12 @@ int main (int argc, char *argv[])
 
             for(ButtonGame &btn : gs.gameButtons)
                 {
-                    if(btn.ButtonId <= 21)
+                    if(btn.ButtonId <= 22)
                     {
                         SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rectt);
                     }
                 }
-            
+
         }
         //end game
         else if (gs.mode == gameMode::credits)
@@ -751,7 +774,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
         bool sprinting = false;
 
         //check all X collisions before checking all Y collisions
-        if (state.keys[SDL_SCANCODE_A] && movementKeys ==true)
+        if (state.keys[SDL_SCANCODE_LEFT] && movementKeys ==true)
         {
             currentDirection += -1;
             obj.position.x += -64 * deltaTime;
@@ -763,7 +786,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 currentDirection += -1;
             }
         }
-        if(state.keys[SDL_SCANCODE_D] && movementKeys ==true)
+        if(state.keys[SDL_SCANCODE_RIGHT] && movementKeys ==true)
         {
             if(sprinting == false)
             {
@@ -826,7 +849,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
         }
 
         // ---- Y axis: now move, then resolve Y collisions ----
-        if (state.keys[SDL_SCANCODE_W] && movementKeys == true)
+        if (state.keys[SDL_SCANCODE_UP] && movementKeys == true)
         {
             obj.position.y += -64 *deltaTime;
             Ydirection += 1;
@@ -836,7 +859,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 Ydirection += 1;
             }
         }
-        if (state.keys[SDL_SCANCODE_S] && movementKeys == true)
+        if (state.keys[SDL_SCANCODE_DOWN] && movementKeys == true)
         {
             obj.position.y += 64 * deltaTime;
             Ydirection += -1;
@@ -846,7 +869,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 Ydirection += -1;
             }
         }
-        if(state.keys[SDL_SCANCODE_E])
+        if(state.keys[SDL_SCANCODE_Z])
         {
             if(touchingNPC == true)
             {
@@ -855,7 +878,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 obj.data.player.state = PlayerState::dialog;
             }
         }
-        if(state.keys[SDL_SCANCODE_R])
+        if(state.keys[SDL_SCANCODE_LSHIFT]) //figure out how to sprint
         {
             sprinting = true;
         }
@@ -1364,13 +1387,13 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
     {
         SDL_RenderDebugText(state.renderer, 450, 250, "NPC");
         SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[0][dialogLine].c_str());
-        SDL_RenderDebugText(state.renderer, 405, 325, "Next(N) >>");
+        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
     }
     if(npcId == 1)
     {
         SDL_RenderDebugText(state.renderer, 450, 250, "NPC2");
         SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[1][dialogLine].c_str());
-        SDL_RenderDebugText(state.renderer, 405, 325, "Next(N) >>");
+        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
     }
 }
 bool isButtonClicked(const Button &btn, float mouseX, float mouseY)
@@ -1480,6 +1503,24 @@ void warning(const SDLState &state, GameState &gs, float deltaTime)
 }
 void save(const SDLState &state, GameState &gs, const Resources &res)
 {
-    std::cout<<SDL_GetPrefPath("indie indie studio studio", "indifference");
+    //https://wiki.libsdl.org/SDL3/CategoryStorage
+    //https://wiki.libsdl.org/SDL3/CategoryFilesystem
+    //https://wiki.libsdl.org/SDL3/SDL_GetPrefPath
+    //scratch that shit only need some SDL use fstream instead way cooler
+    //use these to learn how to do file system 
+    //and learn how to use plain text for the data
 
+    ofstream saveFile("saveData.txt");
+    saveFile << gs.levelNum << '\n' << static_cast<int> (gs.player().data.player.state) <<
+    '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
+    saveFile.close();
+    if(!saveFile)
+    {
+        std::cout<<"this shit aint work";
+    }
+    char *prefPath = SDL_GetPrefPath("D.O.C Studios", "Indifference");
+    std::string savePath = std::string(prefPath) + "save.txt";
+    SDL_free(prefPath);
+
+    std::ofstream out(savePath);
 }
