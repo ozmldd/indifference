@@ -83,6 +83,7 @@ struct GameState
     float timeFlashed = 0.0f;
     bool flash = false;
     float nextFlash = 0.0f;
+    bool gameInProgress = false;
     SDL_FRect mapViewport;
     gameMode mode;
 
@@ -185,6 +186,7 @@ struct holder
     menuButtonn.texture = res.textureButton;
     menuButtonn.ButtonId = 1;
     gs.menuButtons.push_back(menuButtonn);
+
     //ingame option button
     Button optionButton;
     optionButton.rect = SDL_FRect
@@ -228,6 +230,16 @@ struct holder
     BTM.ButtonId = 22;
     gs.gameButtons.push_back(BTM);
 
+    ButtonGame saveBtn;
+    saveBtn.rectt = SDL_FRect
+    {
+        .x = 210, .y = 220,
+        .w = 200, .h = 40,
+    };
+    saveBtn.texture = res.textureButton;
+    saveBtn.ButtonId = 23;
+    gs.gameButtons.push_back(saveBtn);
+
     Slider slider;
     slider.texture = res.textureSlider;
     gs.slider.push_back(slider);
@@ -258,7 +270,7 @@ void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float delt
 void InGameMenu(const SDLState &state, GameState &gs, const Resources &res, GameObject &obj);
 void resetGame(const SDLState &state, GameState &gs, const Resources &res);
 void warning(const SDLState &state, GameState &gs, float deltaTime);
-void save(const SDLState &state, GameState &gs, const Resources &res);
+void save(const SDLState &state, GameState &gs);
 
 int main (int argc, char *argv[])
 {   
@@ -325,7 +337,7 @@ int main (int argc, char *argv[])
                             movementKeys = true;
                         }
                     }
-                    if(event.key.scancode == SDL_SCANCODE_K && gs.mode == gameMode::credits &&
+                    if(event.key.scancode == SDL_SCANCODE_S && gs.mode == gameMode::credits &&
                         gs.creditsElapsed >= SKIP_DELAY)
                     {
                         gs.creditsY = 340;
@@ -335,12 +347,6 @@ int main (int argc, char *argv[])
                     if (gs.mode == gameMode::warning && gs.warningElapsed >= 3.0f)
                     {
                         gs.mode = gameMode::title;
-                    }
-                    if(event.key.scancode == SDL_SCANCODE_X && gs.player().data.player.state == PlayerState::dialog && gs.mode == gameMode::playing)
-                    {
-                        dialogLine = 0;
-                        gs.player().data.player.state == PlayerState::idle;
-                        movementKeys = true;
                     }
                     break;
                 }
@@ -404,8 +410,16 @@ int main (int argc, char *argv[])
                             //start game button
                             if(btn.ButtonId == 0)
                             {
+                                if(gs.gameInProgress)
+                                {
+                                    gs.mode = gameMode::playing;
+                                }
+                                else
+                                {
                                 resetGame(state, gs, res);
+                                gs.gameInProgress = true;
                                 gs.mode = gameMode::playing;
+                                }
                             }
                             else if(btn.ButtonId == 1)
                             {
@@ -415,7 +429,6 @@ int main (int argc, char *argv[])
                             else if (btn.ButtonId == 10)
                             {
                                 gs.mode = gameMode::title;
-
                             }
 
                         }
@@ -436,8 +449,15 @@ int main (int argc, char *argv[])
                                 gs.mode = gameMode::playing;
                             }
                             else if (btn.ButtonId == 22 && gs.mode == gameMode::paused)
-                            {
+                            {   
                                 gs.mode = gameMode::title;
+                                movementKeys = true;
+                                gs.dragging = false;
+                                
+                            }
+                            else if (btn.ButtonId == 23 && gs.mode == gameMode::paused)
+                            {
+                                save(state, gs);
                             }
                         }
                     }
@@ -645,7 +665,7 @@ int main (int argc, char *argv[])
 
             for(ButtonGame &btn : gs.gameButtons)
                 {
-                    if(btn.ButtonId <= 22)
+                    if(btn.ButtonId <= 23)
                     {
                         SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rectt);
                     }
@@ -656,6 +676,7 @@ int main (int argc, char *argv[])
         else if (gs.mode == gameMode::credits)
         {
             Credits(state, gs, 40.0f, deltaTime, res);
+            gs.gameInProgress = false;
         }
         else if (gs.mode == gameMode::warning)
         {
@@ -1426,7 +1447,7 @@ void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float delt
     
     if (gs.creditsElapsed >= SKIP_DELAY)
     {
-        SDL_RenderDebugText(state.renderer, 10, state.logH - 20, "Press K to skip");
+        SDL_RenderDebugText(state.renderer, 10, state.logH - 20, "Press S to skip");
     }
 
 }
@@ -1501,7 +1522,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime)
         SDL_RenderDebugText(state.renderer, px, state.logH - 40.0f, prompt);
     }
 }
-void save(const SDLState &state, GameState &gs, const Resources &res)
+void save(const SDLState &state, GameState &gs)
 {
     //https://wiki.libsdl.org/SDL3/CategoryStorage
     //https://wiki.libsdl.org/SDL3/CategoryFilesystem
@@ -1510,6 +1531,8 @@ void save(const SDLState &state, GameState &gs, const Resources &res)
     //use these to learn how to do file system 
     //and learn how to use plain text for the data
 
+    //work in progress it probably works gotta add button for it tho
+    
     ofstream saveFile("saveData.txt");
     saveFile << gs.levelNum << '\n' << static_cast<int> (gs.player().data.player.state) <<
     '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
@@ -1518,9 +1541,16 @@ void save(const SDLState &state, GameState &gs, const Resources &res)
     {
         std::cout<<"this shit aint work";
     }
-    char *prefPath = SDL_GetPrefPath("D.O.C Studios", "Indifference");
-    std::string savePath = std::string(prefPath) + "save.txt";
-    SDL_free(prefPath);
+    else 
+    {
+        char *prefPath = SDL_GetPrefPath("D.O.C Studios", "Indifference");
+        std::string savePath = std::string(prefPath) + "save.txt";
+        SDL_free(prefPath);
 
-    std::ofstream out(savePath);
+        std::ofstream out(savePath);
+    }
+
+}
+void saveRead(const SDLState &state, GameState &gs)
+{
 }
