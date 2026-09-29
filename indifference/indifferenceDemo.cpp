@@ -8,6 +8,7 @@
 #include <format>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include "gameobject.h"
 
                     #define SDL_BUTTON_LEFT     1
@@ -84,6 +85,8 @@ struct GameState
     bool flash = false;
     float nextFlash = 0.0f;
     bool gameInProgress = false;
+    bool saved = false;
+    string read;
     SDL_FRect mapViewport;
     gameMode mode;
 
@@ -271,6 +274,8 @@ void InGameMenu(const SDLState &state, GameState &gs, const Resources &res, Game
 void resetGame(const SDLState &state, GameState &gs, const Resources &res);
 void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
+void readSave(const SDLState &staet, GameState &gs);
+bool checkForSave(const SDLState &state, GameState &gs);
 
 int main (int argc, char *argv[])
 {   
@@ -607,6 +612,8 @@ int main (int argc, char *argv[])
         //title screen thing
         else if(gs.mode == gameMode::title)
         {
+            if(checkForSave(state, gs) == false)
+            {
             //draw background for title screen
             SDL_RenderTexture(state.renderer, res.textureBg1, nullptr, nullptr);
 
@@ -620,6 +627,11 @@ int main (int argc, char *argv[])
                     SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rect);   
                     }
                 }
+            }
+            else 
+            {
+                readSave(state, gs);
+            }
         }
         //game paused
         else if (gs.mode == gameMode::paused)
@@ -1543,14 +1555,43 @@ void save(const SDLState &state, GameState &gs)
     }
     else 
     {
+        
         char *prefPath = SDL_GetPrefPath("D.O.C Studios", "Indifference");
         std::string savePath = std::string(prefPath) + "save.txt";
         SDL_free(prefPath);
 
         std::ofstream out(savePath);
+        gs.saved = true;
     }
-
 }
-void saveRead(const SDLState &state, GameState &gs)
+void readSave(const SDLState &state, GameState &gs)
 {
+    //might not need a function for this, might have to call this from the main function and check if the user has a save file or just have a function
+    //that checks if the user has a save file and than from the main read it and use it to load it
+    if(gs.saved == true)
+    {
+        ifstream reading("save.txt");
+        gs.read;
+
+        while (getline (reading, gs.read)) 
+        {
+            // Output the text from the file
+            cout << gs.read;
+        }
+        reading.close();
+    }
+}
+bool checkForSave(const SDLState &state, GameState &gs)
+{
+    // Source - https://stackoverflow.com/a/24750132
+    // Posted by Vincent, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-09-28, License - CC BY-SA 4.0
+    if(bool exists = std::filesystem::exists("save.txt"))
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
 }
