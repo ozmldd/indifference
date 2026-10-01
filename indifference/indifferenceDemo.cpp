@@ -612,6 +612,7 @@ int main (int argc, char *argv[])
         //title screen thing
         else if(gs.mode == gameMode::title)
         {
+            //learn how to get each line on the save file to actually load the save file
             if(checkForSave(state, gs) == false)
             {
             //draw background for title screen
@@ -631,6 +632,20 @@ int main (int argc, char *argv[])
             else 
             {
                 readSave(state, gs);
+                //draw background for title screen
+                SDL_RenderTexture(state.renderer, res.textureBg1, nullptr, nullptr);
+
+                Button btn;
+
+                //draw button
+                for (Button &btn : gs.menuButtons)
+                    {
+                        if(btn.ButtonId < 10)
+                        {
+                        SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rect);   
+                        }
+                    }
+                
             }
         }
         //game paused
@@ -1561,7 +1576,6 @@ void save(const SDLState &state, GameState &gs)
         SDL_free(prefPath);
 
         std::ofstream out(savePath);
-        gs.saved = true;
     }
 }
 void readSave(const SDLState &state, GameState &gs)
@@ -1570,13 +1584,14 @@ void readSave(const SDLState &state, GameState &gs)
     //that checks if the user has a save file and than from the main read it and use it to load it
     if(gs.saved == true)
     {
-        ifstream reading("save.txt");
+        //doesn't work, find a way to read each line
+        ifstream reading("saveData.txt");
         gs.read;
+        
 
         while (getline (reading, gs.read)) 
         {
-            // Output the text from the file
-            cout << gs.read;
+            std::cout<< gs.read << '\n';
         }
         reading.close();
     }
@@ -1586,8 +1601,9 @@ bool checkForSave(const SDLState &state, GameState &gs)
     // Source - https://stackoverflow.com/a/24750132
     // Posted by Vincent, modified by community. See post 'Timeline' for change history
     // Retrieved 2026-09-28, License - CC BY-SA 4.0
-    if(bool exists = std::filesystem::exists("save.txt"))
+    if(bool exists = std::filesystem::exists("saveData.txt"))
     {
+        gs.saved = true;
         return true;
     }
     else 
