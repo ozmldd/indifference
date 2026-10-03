@@ -297,22 +297,38 @@ int main (int argc, char *argv[])
     {
         return 1;
     }
+
     // load textures
     Resources res;
     res.load(state);
 
     //setup game data
     GameState gs(state);
+
+    saveStuff stf;
+    if(checkForSave(state, gs) == true)
+    {
+        readSave(state,gs, stf);
+        try
+        {
+            gs.levelNum = std::stoi(stf.lvl);
+            std::cout<<gs.levelNum << '\n';
+        }
+        catch (const std::exception &e)
+        {
+            std::cout << "stoi failed on [" << stf.lvl << "]: " << e.what() << '\n';
+        }
+    }
+    
     createTiles(state, gs, res);
     uint64_t prevTime = SDL_GetTicks();
 
     holder hol;
     hol.buttonStuff(res, gs);
-
-    saveStuff stf;
   
     SDL_srand(0);
 
+    
     //start the game loop
     bool running = true;
     while(running)
@@ -431,7 +447,12 @@ int main (int argc, char *argv[])
                                 }
                                 else
                                 {
-                                resetGame(state, gs, res);
+                                    if(gs.saved == false)
+                                    {
+                                        resetGame(state, gs, res);
+                                    }
+                                
+                                std::cout<<gs.levelNum << '\n';
                                 gs.gameInProgress = true;
                                 gs.mode = gameMode::playing;
                                 }
@@ -488,10 +509,14 @@ int main (int argc, char *argv[])
             }
 
         }
+        //event loop ended !
+
+        //other things started
         
         //perform drawing commands
         SDL_SetRenderDrawColor(state.renderer, 10, 50, 200, 255);
         SDL_RenderClear(state.renderer);
+
 
         //playing game
         if(gs.mode == gameMode::playing)
@@ -594,7 +619,6 @@ int main (int argc, char *argv[])
                 gs.creditsY = 340; 
                 gs.creditsElapsed = 0.0f;
             }
-            std::cout<<gs.levelNum;
         }
 
         //menu screen stuff
@@ -622,9 +646,7 @@ int main (int argc, char *argv[])
         //title screen thing
         else if(gs.mode == gameMode::title)
         {
-            //learn how to get each line on the save file to actually load the save file
-            if(checkForSave(state, gs) == false)
-            {
+
             //draw background for title screen
             SDL_RenderTexture(state.renderer, res.textureBg1, nullptr, nullptr);
 
@@ -638,31 +660,7 @@ int main (int argc, char *argv[])
                     SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rect);   
                     }
                 }
-            }
-            else 
-            {
-                readSave(state, gs, stf);
-                //draw background for title screen
-                SDL_RenderTexture(state.renderer, res.textureBg1, nullptr, nullptr);
-
-                Button btn;
-
-                //draw button
-                for (Button &btn : gs.menuButtons)
-                    {
-                        if(btn.ButtonId < 10)
-                        {
-                        SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rect);   
-                        }
-                    }
-                //use stack overflow on vivaldi to use a certain line to assign the values to the actual player maybe use a function to hold the values and assign them
-                //here using the values, actually don't add another function use readSave and choose a specific line with stack overflow
-                gs.levelNum = std::stoi(stf.lvl);
-                
-                stf.pState = static_cast<int>(gs.player().data.player.state);
-                stf.pPosX = gs.player().position.x;
-                stf.pPosY = gs.player().position.y;
-            }
+            
         }
         //game paused
         else if (gs.mode == gameMode::paused)
@@ -1385,13 +1383,12 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
     assert(gs.PlayerIndex != -1);
     if (gs.PlayerIndex != -1)
     {
-        std::cout<<gs.PlayerIndex << '\n';
+
     }
     if(gs.levelNum >= 3)
     {
         gs.flash = true;
     }
-
 }
 
 //clear the map for the next level
@@ -1610,6 +1607,7 @@ void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
     std::getline(reading, stf.pPosX);
     std::getline(reading, stf.pPosY);
     reading.close();
+
 
 }
 bool checkForSave(const SDLState &state, GameState &gs)
