@@ -89,6 +89,7 @@ struct GameState
     string read;
     SDL_FRect mapViewport;
     gameMode mode;
+    
 
 
     GameState(const SDLState &state)
@@ -163,6 +164,14 @@ struct Resources
             SDL_DestroyTexture(texture);
         }
     }
+};
+
+struct saveStuff
+{
+    std::string lvl;
+    std::string pState;
+    std::string pPosX;
+    std::string pPosY;
 };
 
 struct holder
@@ -268,13 +277,12 @@ void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
 void clearMap(GameState &gs);
 void dialog(const SDLState &state, GameState &gs, const Resources &res);
 bool isButtonClicked(const Button &btn, float mouseX, float mouseY);
-void gameDone(const SDLState &state, GameState &gs, const Resources &res, GameObject &obj, float &scrollSpeed, float deltaTime);
 void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float deltaTime, const Resources &res);
 void InGameMenu(const SDLState &state, GameState &gs, const Resources &res, GameObject &obj);
 void resetGame(const SDLState &state, GameState &gs, const Resources &res);
 void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
-void readSave(const SDLState &staet, GameState &gs);
+void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
 
 int main (int argc, char *argv[])
@@ -300,7 +308,9 @@ int main (int argc, char *argv[])
 
     holder hol;
     hol.buttonStuff(res, gs);
-    
+
+    saveStuff stf;
+  
     SDL_srand(0);
 
     //start the game loop
@@ -584,7 +594,7 @@ int main (int argc, char *argv[])
                 gs.creditsY = 340; 
                 gs.creditsElapsed = 0.0f;
             }
-            
+            std::cout<<gs.levelNum;
         }
 
         //menu screen stuff
@@ -631,7 +641,7 @@ int main (int argc, char *argv[])
             }
             else 
             {
-                readSave(state, gs);
+                readSave(state, gs, stf);
                 //draw background for title screen
                 SDL_RenderTexture(state.renderer, res.textureBg1, nullptr, nullptr);
 
@@ -645,7 +655,13 @@ int main (int argc, char *argv[])
                         SDL_RenderTexture(state.renderer, btn.texture, nullptr, &btn.rect);   
                         }
                     }
+                //use stack overflow on vivaldi to use a certain line to assign the values to the actual player maybe use a function to hold the values and assign them
+                //here using the values, actually don't add another function use readSave and choose a specific line with stack overflow
+                gs.levelNum = std::stoi(stf.lvl);
                 
+                stf.pState = static_cast<int>(gs.player().data.player.state);
+                stf.pPosX = gs.player().position.x;
+                stf.pPosY = gs.player().position.y;
             }
         }
         //game paused
@@ -1578,23 +1594,23 @@ void save(const SDLState &state, GameState &gs)
         std::ofstream out(savePath);
     }
 }
-void readSave(const SDLState &state, GameState &gs)
+void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
 {
     //might not need a function for this, might have to call this from the main function and check if the user has a save file or just have a function
     //that checks if the user has a save file and than from the main read it and use it to load it
-    if(gs.saved == true)
+    ifstream reading("saveData.txt");
+    if (!reading)
     {
-        //doesn't work, find a way to read each line
-        ifstream reading("saveData.txt");
-        gs.read;
-        
-
-        while (getline (reading, gs.read)) 
-        {
-            std::cout<< gs.read << '\n';
-        }
-        reading.close();
+        std::cout << "couldn't open file\n";
+        return; 
     }
+
+    std::getline(reading, stf.lvl);
+    std::getline(reading, stf.pState);
+    std::getline(reading, stf.pPosX);
+    std::getline(reading, stf.pPosY);
+    reading.close();
+
 }
 bool checkForSave(const SDLState &state, GameState &gs)
 {
