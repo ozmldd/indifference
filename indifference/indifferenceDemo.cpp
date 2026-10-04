@@ -53,6 +53,7 @@ int activeNPCId = -1;
 const float SKIP_DELAY = 5.0f;
 bool title = true;
 const float FLASH_DURATION = 0.15f;
+int distanceP;
 std::string credits [6]
 {
     "Thanks For Playing!",
@@ -242,7 +243,7 @@ struct holder
     BTM.ButtonId = 22;
     gs.gameButtons.push_back(BTM);
 
-    ButtonGame saveBtn;
+    ButtonGame saveBtn; // save the game
     saveBtn.rectt = SDL_FRect
     {
         .x = 210, .y = 220,
@@ -312,14 +313,13 @@ int main (int argc, char *argv[])
         try
         {
             gs.levelNum = std::stoi(stf.lvl);
-            std::cout<<gs.levelNum << '\n';
         }
         catch (const std::exception &e)
         {
             std::cout << "stoi failed on [" << stf.lvl << "]: " << e.what() << '\n';
         }
     }
-    
+
     createTiles(state, gs, res);
     uint64_t prevTime = SDL_GetTicks();
 
@@ -328,7 +328,32 @@ int main (int argc, char *argv[])
   
     SDL_srand(0);
 
+    int og = gs.player().position.x - TILE_SIZE;
+    if(checkForSave(state, gs) == true)
+    {
+        readSave(state,gs, stf);
+        try
+        {
+            gs.player().position.x = std::stoi(stf.pPosX);       
+        }
+        catch (const std::exception &e)
+        {
+            std::cout << "stoi failed on [" << stf.pPosX << "]: " << e.what() << '\n';
+        }
     
+    }
+    if(checkForSave(state,gs) == true)
+    {
+        readSave(state, gs, stf);
+        try
+        {
+            gs.player().position.y = std::stoi(stf.pPosY);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
     //start the game loop
     bool running = true;
     while(running)
@@ -404,6 +429,7 @@ int main (int argc, char *argv[])
                             Slider &s = gs.slider[0];
                             float value = (event.motion.x - s.slide.x) / s.slide.w;
                             s.value = SDL_clamp(value, 0.0f, 1.0f);
+                            std::cout<<value;
 
                             Handle &h = gs.handles[0];
                             h.handler.x = s.slide.x + s.value * (s.slide.w - h.handler.w);
@@ -451,8 +477,6 @@ int main (int argc, char *argv[])
                                     {
                                         resetGame(state, gs, res);
                                     }
-                                
-                                std::cout<<gs.levelNum << '\n';
                                 gs.gameInProgress = true;
                                 gs.mode = gameMode::playing;
                                 }
@@ -509,9 +533,10 @@ int main (int argc, char *argv[])
             }
 
         }
-        //event loop ended !
 
-        //other things started
+        //event loop ended !                                                                                                            //
+
+        //other things started                                                                                                          //
         
         //perform drawing commands
         SDL_SetRenderDrawColor(state.renderer, 10, 50, 200, 255);
@@ -700,7 +725,7 @@ int main (int argc, char *argv[])
                         SDL_RenderTexture(state.renderer, res.textureHandle, nullptr, &h.handler);
                     }
                     SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                    SDL_RenderDebugText(state.renderer, 120, 222, std::format(
+                    SDL_RenderDebugText(state.renderer, 120, 280, std::format(
                     "Volume: {}%", static_cast<int>(gs.slider[0].value * 100)).c_str());
                 
 
@@ -1349,6 +1374,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
             }
         }
     }
+
     };
     //switch the level if the level num changes
     switch(gs.levelNum)
@@ -1574,8 +1600,7 @@ void save(const SDLState &state, GameState &gs)
     //work in progress it probably works gotta add button for it tho
     
     ofstream saveFile("saveData.txt");
-    saveFile << gs.levelNum << '\n' << static_cast<int> (gs.player().data.player.state) <<
-    '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
+    saveFile << gs.levelNum << '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
     saveFile.close();
     if(!saveFile)
     {
@@ -1603,7 +1628,6 @@ void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
     }
 
     std::getline(reading, stf.lvl);
-    std::getline(reading, stf.pState);
     std::getline(reading, stf.pPosX);
     std::getline(reading, stf.pPosY);
     reading.close();

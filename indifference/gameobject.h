@@ -86,7 +86,7 @@ struct Slider
 {
     SDL_FRect slide
     {
-        .x = 215, .y = 200,
+        .x = 200, .y = 265,
         .w = 250, .h = 80
     };
     SDL_Texture *texture;
@@ -97,7 +97,7 @@ struct Handle
 {   
     SDL_FRect handler
     {
-        .x = 210, .y = 210.5,
+        .x = 195, .y = 275.5,
         .w = 100, .h = 50
     };
     SDL_Texture *texture;
