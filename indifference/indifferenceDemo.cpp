@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
@@ -90,8 +91,7 @@ struct GameState
     string read;
     SDL_FRect mapViewport;
     gameMode mode;
-    
-
+    bool sprinting = false;
 
     GameState(const SDLState &state)
     {
@@ -124,6 +124,23 @@ struct Resources
     std::vector<SDL_Texture *> textures;
     SDL_Texture *textureIdle, *textureRun, *textureGrass, *textureDirt, *textureTest, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
     , *textureBg1, *textureSlider, *textureHandle, *textureMenu;
+    
+    //music stuffff
+    std::vector<MIX_Audio *> audioClips;
+    MIX_Audio *audioMusic;
+    MIX_Track *trackMusic;
+
+    static const std::string &assetPath(const std::string &relativePath)
+    {
+        static const std::string basePath = []() -> std::string {
+            const char *path = SDL_GetBasePath();
+            std::string result = path ? path : "./";
+            return result;
+        }();
+        static std::string full;
+        full = basePath + relativePath;
+        return full;
+    }
 
     SDL_Texture *loadTexture(SDL_Renderer *renderer, const std::string &filepath)
     {
@@ -134,9 +151,17 @@ struct Resources
         return texture;
     }
 
-    //this is to link music to the slider 
-    //MIX_SetTrackGain(res.trackMusic, slider.value);
-
+    MIX_Audio *loadAudio(MIX_Mixer *mixer, const std::string &filepath)
+    {
+        MIX_Audio *audio = MIX_LoadAudio(mixer, assetPath(filepath).c_str(), false);
+        if (!audio)
+        {
+            std::cout << "Failed to load audio " << filepath << ": " << SDL_GetError() << std::endl;
+        }
+        audioClips.push_back(audio);
+        return audio;
+    }
+    
     void load(SDLState &state)
     {
         playerAnims.resize(5);
@@ -157,12 +182,19 @@ struct Resources
         textureSlider = loadTexture(state.renderer, "assets/texture/slider.png");
         textureHandle = loadTexture(state.renderer, "assets/texture/handle.png");
         textureMenu = loadTexture(state.renderer, "assets/texture/menu.png");
+
+        //this is to link music to the slider 
+        //MIX_SetTrackGain(res.trackMusic, slider.value);
+        //this is for music later
     }
     void unload()
     {
-        for (SDL_Texture *texture : textures)
-        {
+        for (SDL_Texture *texture : textures){
             SDL_DestroyTexture(texture);
+        }
+        MIX_DestroyTrack(trackMusic);
+        for (MIX_Audio *audio : audioClips){
+            MIX_DestroyAudio(audio);
         }
     }
 };
@@ -404,6 +436,14 @@ int main (int argc, char *argv[])
                     {
                         gs.mode = gameMode::title;
                     }
+                    if(event.key.scancode == SDL_SCANCODE_LSHIFT && gs.mode == gameMode::playing && movementKeys == true)
+                    {
+                        gs.sprinting = true;
+                    }
+                    else
+                    {
+                        gs.sprinting = false;
+                    }
                     break;
                 }
                 case SDL_EVENT_KEY_UP:
@@ -429,7 +469,6 @@ int main (int argc, char *argv[])
                             Slider &s = gs.slider[0];
                             float value = (event.motion.x - s.slide.x) / s.slide.w;
                             s.value = SDL_clamp(value, 0.0f, 1.0f);
-                            std::cout<<value;
 
                             Handle &h = gs.handles[0];
                             h.handler.x = s.slide.x + s.value * (s.slide.w - h.handler.w);
@@ -858,37 +897,39 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
         float currentDirection = 0;
         float Ydirection = 0;
         bool xMovement = false;
-        bool sprinting = false;
+
 
         //check all X collisions before checking all Y collisions
         if (state.keys[SDL_SCANCODE_LEFT] && movementKeys ==true)
         {
-            currentDirection += -1;
-            obj.position.x += -64 * deltaTime;
-            xMovement = true;
+
             //doesnt work, learn to fix it
-            if(sprinting == true)
+            if(gs.sprinting == true)
             {
-                obj.position.x += 96 *deltaTime;
+                obj.position.x += -96 *deltaTime;
                 currentDirection += -1;
             }
+            else
+            {
+            currentDirection += -1;
+            obj.position.x += -64 * deltaTime;
+            }
+            xMovement = true;
         }
         if(state.keys[SDL_SCANCODE_RIGHT] && movementKeys ==true)
         {
-            if(sprinting == false)
-            {
-
             
-            currentDirection += 1;
-            obj.position.x += 64 * deltaTime;
-            xMovement = true;
-            }
-            if(sprinting == true)
+            if(gs.sprinting == true)
             {
                 obj.position.x += 96 *deltaTime;
                 currentDirection += 1;
             }
-            
+            else
+            {
+            currentDirection += 1;
+            obj.position.x += 64 * deltaTime;
+            }
+            xMovement = true;
         }
         for (auto &layer : gs.layers)
         {
@@ -938,24 +979,34 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
         // ---- Y axis: now move, then resolve Y collisions ----
         if (state.keys[SDL_SCANCODE_UP] && movementKeys == true)
         {
+
+            if(gs.sprinting == true)
+            {
+                obj.position.y += -96 *deltaTime;
+                Ydirection += 1;
+            }
+            else
+            {
             obj.position.y += -64 *deltaTime;
             Ydirection += 1;
-            if(sprinting == true)
-            {
-                obj.position.y += 96 *deltaTime;
-                Ydirection += 1;
             }
         }
         if (state.keys[SDL_SCANCODE_DOWN] && movementKeys == true)
         {
-            obj.position.y += 64 * deltaTime;
-            Ydirection += -1;
-            if(sprinting == true)
+
+            if(gs.sprinting == true)
             {
                 obj.position.y += 96 *deltaTime;
                 Ydirection += -1;
+
+            }
+            else
+            {
+                obj.position.y += 64 * deltaTime;
+                Ydirection += -1;
             }
         }
+
         if(state.keys[SDL_SCANCODE_Z])
         {
             if(touchingNPC == true)
@@ -964,10 +1015,6 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 dialogLine = 0;
                 obj.data.player.state = PlayerState::dialog;
             }
-        }
-        if(state.keys[SDL_SCANCODE_LSHIFT]) //figure out how to sprint
-        {
-            sprinting = true;
         }
 
 
@@ -1451,7 +1498,6 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
     SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
 
     //keep seperate from drawing box thingy 
-
     std::string characterName[4] = {
                                     "NPC",
                                     "NPC2",
@@ -1467,6 +1513,12 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
     {
         "p speechchchchch",
         "p2 speechchechhchc"
+    },
+    {
+        ""
+    },
+    {
+        ""
     },
     };
 
@@ -1490,7 +1542,7 @@ bool isButtonClicked(const Button &btn, float mouseX, float mouseY)
 }
 void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float deltaTime, const Resources &res)
 {    
-    //track if the credits go off screen (see bullets from old game for this), and add a feature to skip the end credits
+
     SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(state.renderer, NULL);
     int lineGap = 40;
@@ -1524,7 +1576,6 @@ void InGameMenu(const SDLState &state, GameState &gs, const Resources &res, Game
     
     const float charW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE;
 
-    //works
     SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 160);
     SDL_FRect full{
@@ -1590,14 +1641,6 @@ void warning(const SDLState &state, GameState &gs, float deltaTime)
 }
 void save(const SDLState &state, GameState &gs)
 {
-    //https://wiki.libsdl.org/SDL3/CategoryStorage
-    //https://wiki.libsdl.org/SDL3/CategoryFilesystem
-    //https://wiki.libsdl.org/SDL3/SDL_GetPrefPath
-    //scratch that shit only need some SDL use fstream instead way cooler
-    //use these to learn how to do file system 
-    //and learn how to use plain text for the data
-
-    //work in progress it probably works gotta add button for it tho
     
     ofstream saveFile("saveData.txt");
     saveFile << gs.levelNum << '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
@@ -1618,8 +1661,7 @@ void save(const SDLState &state, GameState &gs)
 }
 void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
 {
-    //might not need a function for this, might have to call this from the main function and check if the user has a save file or just have a function
-    //that checks if the user has a save file and than from the main read it and use it to load it
+
     ifstream reading("saveData.txt");
     if (!reading)
     {
@@ -1632,13 +1674,10 @@ void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
     std::getline(reading, stf.pPosY);
     reading.close();
 
-
 }
 bool checkForSave(const SDLState &state, GameState &gs)
 {
-    // Source - https://stackoverflow.com/a/24750132
-    // Posted by Vincent, modified by community. See post 'Timeline' for change history
-    // Retrieved 2026-09-28, License - CC BY-SA 4.0
+
     if(bool exists = std::filesystem::exists("saveData.txt"))
     {
         gs.saved = true;
