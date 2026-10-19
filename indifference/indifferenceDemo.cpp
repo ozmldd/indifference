@@ -319,6 +319,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
+void switchLvl(SDLState &state, GameState &gs, float deltaTime);
 
 int main (int argc, char *argv[])
 {   
@@ -602,6 +603,7 @@ int main (int argc, char *argv[])
             {
                 clearMap(gs);
                 createTiles(state, gs, res);
+                switchLvl(state, gs, 2.0f);
             }
 
             if(gs.flash)
@@ -1706,15 +1708,11 @@ bool checkForSave(const SDLState &state, GameState &gs)
 }
 void switchLvl(SDLState &state, GameState &gs, float deltaTime)
 {
-
     gs.swtchLvl += deltaTime;
-    if(gs.swtchLvl <= 1.0f)
+    if(gs.swtchLvl <= 1000.0f)
     {
-        if(gs.player().data.player.state == PlayerState::switchlvl)
-        {
             SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
             SDL_FRect full { 0, 0, (float)state.logW, (float)state.logH };
             SDL_RenderFillRect(state.renderer, &full);
-        }
     }
 }
