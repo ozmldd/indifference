@@ -92,6 +92,10 @@ struct GameState
     SDL_FRect mapViewport;
     gameMode mode;
     bool sprinting = false;
+    bool switchLvl = false;
+    float Lvltransition = 0.0f;
+    bool lvlswitching = false;
+    bool lvlMapSwitched = false;
 
     GameState(const SDLState &state)
     {
@@ -123,7 +127,7 @@ struct Resources
 
     std::vector<SDL_Texture *> textures;
     SDL_Texture *textureIdle, *textureRun, *textureGrass, *textureDirt, *textureTest, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
-    , *textureBg1, *textureSlider, *textureHandle, *textureMenu;
+    , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition;
     
     //music stuffff
     std::vector<MIX_Audio *> audioClips;
@@ -182,6 +186,7 @@ struct Resources
         textureSlider = loadTexture(state.renderer, "assets/texture/slider.png");
         textureHandle = loadTexture(state.renderer, "assets/texture/handle.png");
         textureMenu = loadTexture(state.renderer, "assets/texture/menu.png");
+        textureTransition = loadTexture(state.renderer, "assets/texture/transition.png");
 
         //this is to link music to the slider 
         //MIX_SetTrackGain(res.trackMusic, slider.value);
@@ -293,7 +298,7 @@ struct holder
     handle.texture = res.textureHandle;
     handle.handler.x = slider.slide.x + slider.value * (slider.slide.w - handle.handler.w);
     gs.handles.push_back(handle);
-
+ 
     }
 };
 
@@ -317,6 +322,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
+void lvlTransition(SDLState &state, GameState &gs, float deltaTime);
 
 int main (int argc, char *argv[])
 {   
@@ -396,7 +402,7 @@ int main (int argc, char *argv[])
         while (SDL_PollEvent(&event))
         {
 
-            //woorks
+
             SDL_ConvertEventToRenderCoordinates(state.renderer, &event);
             switch(event.type)
             {
@@ -436,14 +442,7 @@ int main (int argc, char *argv[])
                     {
                         gs.mode = gameMode::title;
                     }
-                    if(event.key.scancode == SDL_SCANCODE_LSHIFT && gs.mode == gameMode::playing && movementKeys == true)
-                    {
-                        gs.sprinting = true;
-                    }
-                    else
-                    {
-                        gs.sprinting = false;
-                    }
+
                     break;
                 }
                 case SDL_EVENT_KEY_UP:
@@ -467,11 +466,11 @@ int main (int argc, char *argv[])
                         if (gs.dragging)
                         {
                             Slider &s = gs.slider[0];
-                            float value = (event.motion.x - s.slide.x) / s.slide.w;
+                            float value = ((event.motion.x+20) - (s.slide.x+20)) / s.slide.w;
                             s.value = SDL_clamp(value, 0.0f, 1.0f);
 
                             Handle &h = gs.handles[0];
-                            h.handler.x = s.slide.x + s.value * (s.slide.w - h.handler.w);
+                            h.handler.x = -25+s.slide.x + s.value * (s.slide.w - h.handler.w + 50);
                         }
                     }
                     break;
@@ -580,7 +579,7 @@ int main (int argc, char *argv[])
         //perform drawing commands
         SDL_SetRenderDrawColor(state.renderer, 10, 50, 200, 255);
         SDL_RenderClear(state.renderer);
-
+        
 
         //playing game
         if(gs.mode == gameMode::playing)
@@ -601,12 +600,33 @@ int main (int argc, char *argv[])
                 }
             }
 
-        
             //change maps probably could be better idk 
-            if(gs.player().data.player.state == PlayerState::cutscene)
+            if(!gs.lvlswitching && gs.player().data.player.state == PlayerState::switchlvl)
             {
-                clearMap(gs);
-                createTiles(state, gs, res);
+                gs.lvlswitching = true;
+                gs.Lvltransition = 0.0f;
+                gs.lvlMapSwitched = false;
+                movementKeys = false;
+            }
+            if(gs.lvlswitching)
+            {
+                gs.Lvltransition += deltaTime;
+                constexpr float fadeDuration = 0.25f;
+
+                if(!gs.lvlMapSwitched && gs.Lvltransition >= fadeDuration)
+                {
+                    clearMap(gs);
+                    createTiles(state, gs, res);
+                    gs.lvlMapSwitched = true;
+                }
+
+                if(gs.Lvltransition >= fadeDuration * 2.0f)
+                {
+                    gs.lvlswitching = false;
+                    gs.Lvltransition = 0.0f;
+                    gs.lvlMapSwitched = false;
+                    movementKeys = true;
+                }
             }
 
             if(gs.flash)
@@ -669,14 +689,14 @@ int main (int argc, char *argv[])
                 SDL_RenderFillRect(state.renderer, NULL);
                 SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
                 SDL_RenderDebugText(state.renderer, 350, 350, "STOPPPPPPPPPP");
-                //work on randomising this and add keybinds from daniel dms on insta
+
             }
         // dialog thingy its working for me so 
             if (gs.player().data.player.state == PlayerState::dialog)
             {
                 dialog(state, gs, res);
             }
-            //this works
+
             if (gs.player().data.player.state == PlayerState::ended)
             {
                 gs.mode = gameMode::credits;
@@ -704,8 +724,10 @@ int main (int argc, char *argv[])
                 SDL_RenderTexture(state.renderer, res.textureHandle, nullptr, &h.handler);
             }
             SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-            SDL_RenderDebugText(state.renderer, 120, 222, std::format(
-                "Volume: {}%", static_cast<int>(gs.slider[0].value * 100)).c_str());
+            SDL_RenderDebugText(state.renderer, 150, 287, std::format("Volume").c_str());
+            
+            SDL_RenderDebugText(state.renderer, 470, 287, std::format(
+               "{}%", static_cast<int>(gs.slider[0].value * 100)).c_str());
         }
         //title screen thing
         else if(gs.mode == gameMode::title)
@@ -764,8 +786,10 @@ int main (int argc, char *argv[])
                         SDL_RenderTexture(state.renderer, res.textureHandle, nullptr, &h.handler);
                     }
                     SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                    SDL_RenderDebugText(state.renderer, 120, 280, std::format(
-                    "Volume: {}%", static_cast<int>(gs.slider[0].value * 100)).c_str());
+                SDL_RenderDebugText(state.renderer, 153, 287, std::format("Volume").c_str());
+                
+                SDL_RenderDebugText(state.renderer, 450, 287, std::format(
+                "{}%", static_cast<int>(gs.slider[0].value * 100)).c_str());
                 
 
             for(ButtonGame &btn : gs.gameButtons)
@@ -796,6 +820,20 @@ int main (int argc, char *argv[])
             SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
             SDL_RenderDebugText(state.renderer, 5, 5, std::format("State: {}, playerindex:{}, movementKeys:{}",
             static_cast<int>( gs.player().data.player.state), gs.PlayerIndex, movementKeys).c_str());
+        }
+
+        if(gs.lvlswitching)
+        {
+            constexpr float fadeDuration = 0.25f;
+            const float fadeProgress = gs.Lvltransition < fadeDuration
+                ? gs.Lvltransition / fadeDuration
+                : 1.0f - ((gs.Lvltransition - fadeDuration) / fadeDuration);
+            const Uint8 alpha = static_cast<Uint8>(SDL_clamp(fadeProgress, 0.0f, 1.0f) * 255.0f);
+
+            SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, alpha);
+            SDL_RenderFillRect(state.renderer, nullptr);
+            SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_NONE);
         }
 
         // swap buffers and present
@@ -853,6 +891,7 @@ void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float del
         const float spriteSize = 32;
         float srcX = obj.currentAnimation != -1
             ? obj.animations[obj.currentAnimation].currentFrame() * frameSize : 0.0f;
+        //player drawing
         SDL_FRect src
         {
             .x = srcX,
@@ -860,10 +899,10 @@ void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float del
             .w = frameSize,
             .h = frameSize,
         };
-
+        //rest of the thing drawing
         SDL_FRect dst
         {
-            .x = obj.position.x -gs.mapViewport.x,
+            .x = obj.position.x - gs.mapViewport.x,
             .y = obj.position.y - gs.mapViewport.y,
             .w = spriteSize,
             .h = spriteSize
@@ -896,14 +935,12 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
     {
         float currentDirection = 0;
         float Ydirection = 0;
-        bool xMovement = false;
 
 
         //check all X collisions before checking all Y collisions
         if (state.keys[SDL_SCANCODE_LEFT] && movementKeys ==true)
         {
 
-            //doesnt work, learn to fix it
             if(gs.sprinting == true)
             {
                 obj.position.x += -96 *deltaTime;
@@ -914,7 +951,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             currentDirection += -1;
             obj.position.x += -64 * deltaTime;
             }
-            xMovement = true;
+
         }
         if(state.keys[SDL_SCANCODE_RIGHT] && movementKeys ==true)
         {
@@ -929,7 +966,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             currentDirection += 1;
             obj.position.x += 64 * deltaTime;
             }
-            xMovement = true;
+
         }
         for (auto &layer : gs.layers)
         {
@@ -1046,8 +1083,15 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 break;
             }
         }
-
-
+        //sprinting mechanic
+        if(state.keys[SDL_SCANCODE_LSHIFT] && gs.mode == gameMode::playing && movementKeys == true)
+        {
+            gs.sprinting = true;
+        }
+        else
+        {
+            gs.sprinting = false;
+        }
 
 
         bool foundGround = false;
@@ -1139,6 +1183,11 @@ void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
                     gs.player().data.player.state = PlayerState::cutscene;
                     break;
                 }
+                case ObjectType::switchlvl:
+                {
+                    gs.player().data.player.state = PlayerState::switchlvl;
+                    break;
+                }
                 case ObjectType::end:
                 {
                     gs.player().data.player.state = PlayerState::ended;
@@ -1180,8 +1229,7 @@ void checkCollision(const SDLState &state, GameState &gs, Resources &res,
 }
 void createTiles(const SDLState &state, GameState &gs, const Resources &res)
 {
-    //note for later, make a variable in either gamestate or on top with the TILE_SIZE and such to switch the levels, make a clear map function
-    //try to keep all the levels here, don't mess with arrays unless needed and add another block to activate a cutscene
+
     
     short level1[MAP_ROWS][MAP_COLS]=
     {
@@ -1369,7 +1417,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
                 player.maxSpeedX = 100;
                 player.collider = 
                 {
-                    .x = 11, .y = 6,
+                    .x = 11, .y = 4,
                     .w = 12, .h = 26,
                 };
                 gs.layers[LAYER_IDX_CHARACTER].push_back(player);
@@ -1378,8 +1426,8 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
                 }
                 case 5:
                 {
-                    //event block
-                    GameObject o = createObject(r,c,res.textureEvent, ObjectType::event);
+                    //switch lvl
+                    GameObject o = createObject(r,c,res.textureEvent, ObjectType::switchlvl);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
@@ -1415,6 +1463,13 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
                 {
                     //end game event block
                     GameObject o = createObject(r, c, res.textureEvent, ObjectType::end);
+                    gs.layers[LAYER_IDX_LEVEL].push_back(o);
+                    break;
+                }
+                case 9:
+                {
+                    //cutscene event block
+                    GameObject o = createObject(r,c,res.textureEvent, ObjectType::event);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }

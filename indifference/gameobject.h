@@ -114,7 +114,7 @@ union ObjectData
 
 enum class ObjectType
 {
-    player, level, NPC, event, end, creditB
+    player, level, NPC, event, end, creditB, switchlvl
 };
 
 struct GameObject
