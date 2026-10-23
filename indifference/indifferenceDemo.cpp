@@ -54,7 +54,7 @@ int activeNPCId = -1;
 const float SKIP_DELAY = 5.0f;
 bool title = true;
 const float FLASH_DURATION = 0.15f;
-int distanceP;
+bool gameFin = false;
 std::string credits [6]
 {
     "Thanks For Playing!",
@@ -93,13 +93,9 @@ struct GameState
     gameMode mode;
     bool sprinting = false;
     bool switchLvl = false;
-<<<<<<< HEAD
     float Lvltransition = 0.0f;
     bool lvlswitching = false;
     bool lvlMapSwitched = false;
-=======
-    float swtchLvl;
->>>>>>> f60edc0aa01c20e777567f6dba87b8ca99e47feb
 
     GameState(const SDLState &state)
     {
@@ -326,11 +322,6 @@ void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
-<<<<<<< HEAD
-void lvlTransition(SDLState &state, GameState &gs, float deltaTime);
-=======
-void switchLvl(SDLState &state, GameState &gs, float deltaTime);
->>>>>>> f60edc0aa01c20e777567f6dba87b8ca99e47feb
 
 int main (int argc, char *argv[])
 {   
@@ -519,9 +510,10 @@ int main (int argc, char *argv[])
                                 }
                                 else
                                 {
-                                    if(gs.saved == false)
+                                    if(gs.saved == false || gameFin)
                                     {
                                         resetGame(state, gs, res);
+                                        gameFin = false;
                                     }
                                 gs.gameInProgress = true;
                                 gs.mode = gameMode::playing;
@@ -609,7 +601,6 @@ int main (int argc, char *argv[])
             }
 
             //change maps probably could be better idk 
-<<<<<<< HEAD
             if(!gs.lvlswitching && gs.player().data.player.state == PlayerState::switchlvl)
             {
                 gs.lvlswitching = true;
@@ -636,14 +627,9 @@ int main (int argc, char *argv[])
                     gs.lvlMapSwitched = false;
                     movementKeys = true;
                 }
-=======
-            if(gs.player().data.player.state == PlayerState::switchlvl)
-            {
-                clearMap(gs);
-                createTiles(state, gs, res);
-                switchLvl(state, gs, 2.0f);
->>>>>>> f60edc0aa01c20e777567f6dba87b8ca99e47feb
             }
+            //fix credit scene bug again, change position or level or reset to last save and add auto save when reaching some sort of prohress
+            //fix the bug by either changing the position or something else idk
 
             if(gs.flash)
             {
@@ -822,6 +808,7 @@ int main (int argc, char *argv[])
         {
             Credits(state, gs, 40.0f, deltaTime, res);
             gs.gameInProgress = false;
+            gameFin = true;
         }
         else if (gs.mode == gameMode::warning)
         {
@@ -1195,7 +1182,6 @@ void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
                 }
                 case ObjectType::event:
                 {
-
                     gs.player().data.player.state = PlayerState::cutscene;
                     break;
                 }
@@ -1546,7 +1532,7 @@ void clearMap(GameState &gs)
 
     gs.levelNum ++;
 
-    if (gs.levelNum > 3) { gs.levelNum = 1; } //set it to the first level instead of crashing the game
+    if (gs.levelNum > 3) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
 }
 
 void dialog(const SDLState &state, GameState &gs, const Resources &res)
@@ -1757,15 +1743,5 @@ bool checkForSave(const SDLState &state, GameState &gs)
     else 
     {
         return false;
-    }
-}
-void switchLvl(SDLState &state, GameState &gs, float deltaTime)
-{
-    gs.swtchLvl += deltaTime;
-    if(gs.swtchLvl <= 1000.0f)
-    {
-            SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
-            SDL_FRect full { 0, 0, (float)state.logW, (float)state.logH };
-            SDL_RenderFillRect(state.renderer, &full);
     }
 }
