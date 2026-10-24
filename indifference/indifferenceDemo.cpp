@@ -64,6 +64,7 @@ std::string credits [6]
     "gdjgkljdflgjf",
     "jfgkldjg",
 };
+bool CSppl;
 
 struct GameState
 {
@@ -124,9 +125,11 @@ struct Resources
     const int ANIM_PLAYER_IDLE = 0;
     const int ANIM_PLAYER_RUN = 1;
     std::vector<Animation> playerAnims;
+    std::vector<Animation> AgentAnims;
+    const int ANIM_AGENT_WALK = 0;
 
     std::vector<SDL_Texture *> textures;
-    SDL_Texture *textureIdle, *textureRun, *textureGrass, *textureDirt, *textureTest, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
+    SDL_Texture *textureIdle, *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureTest, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
     , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition;
     
     //music stuffff
@@ -171,11 +174,17 @@ struct Resources
         playerAnims.resize(5);
         playerAnims[ANIM_PLAYER_IDLE] = Animation(1, 1.50f);
         playerAnims[ANIM_PLAYER_RUN] = Animation(4, .80f);
+        AgentAnims.resize(3);
+        AgentAnims[ANIM_AGENT_WALK]= Animation(1, 1.0f);
 
         textureIdle = loadTexture(state.renderer, "assets/texture/idle.png");
         textureRun = loadTexture(state.renderer, "assets/texture/walking.png");
-        textureGrass = loadTexture(state.renderer, "assets/texture/grass_block.png");
-        textureDirt = loadTexture(state.renderer, "assets/texture/dirt_block.png");
+        textureAgentIdle = loadTexture(state.renderer, "assets/texture/NPC.png");
+        textureWood = loadTexture(state.renderer, "assets/texture/wood.png");
+        textureWoodBaseS = loadTexture(state.renderer, "assets/texture/base woodS.png");
+        textureWoodBaseN = loadTexture(state.renderer, "assets/texture/base woodN.png");
+        textureWoodBaseE = loadTexture(state.renderer, "assets/texture/base woodE.png");
+        textureWoodBaseW = loadTexture(state.renderer, "assets/texture/base woodW.png");
         textureTest = loadTexture(state.renderer, "assets/texture/test.png");
         textureIdk = loadTexture(state.renderer, "assets/texture/idk.png");
         textureEvent = loadTexture(state.renderer, "assets/texture/event.block.png");
@@ -306,7 +315,8 @@ void cleanup(SDLState &state);
 bool initialize(SDLState &state);
 void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float deltaTime);
 void update(const SDLState &state, GameState &gs, Resources &res, GameObject &obj, float deltaTime);
-void createTiles(const SDLState &state, GameState &gs, const Resources &res);
+void createTiles(const SDLState &state, GameState &gs, const Resources &res,
+    bool cutsceneCharactersOnly = false);
 void checkCollision(const SDLState &state, GameState &gs, Resources &res,
     GameObject &a, GameObject &b, float deltaTime, bool xAxis);
 void collisionResponse (const SDLState &state, GameState &gs, Resources &res, 
@@ -322,6 +332,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
+void introCutscene(GameState &gs);
 
 int main (int argc, char *argv[])
 {   
@@ -342,6 +353,8 @@ int main (int argc, char *argv[])
 
     //setup game data
     GameState gs(state);
+
+    GameObject obj;
 
     saveStuff stf;
     if(checkForSave(state, gs) == true)
@@ -577,7 +590,7 @@ int main (int argc, char *argv[])
         //other things started                                                                                                          //
         
         //perform drawing commands
-        SDL_SetRenderDrawColor(state.renderer, 10, 50, 200, 255);
+        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
         SDL_RenderClear(state.renderer);
         
 
@@ -628,8 +641,6 @@ int main (int argc, char *argv[])
                     movementKeys = true;
                 }
             }
-            //fix credit scene bug again, change position or level or reset to last save and add auto save when reaching some sort of prohress
-            //fix the bug by either changing the position or something else idk
 
             if(gs.flash)
             {
@@ -652,9 +663,17 @@ int main (int argc, char *argv[])
             }
 
             //calculate viewport position
+            if(gs.levelNum > 1)
+            {
+            
             gs.mapViewport.x = (gs.player().position.x + TILE_SIZE / 2) - gs.mapViewport.w / 2;
             gs.mapViewport.y = (gs.player().position.y + TILE_SIZE / 2) - gs.mapViewport.h / 2;
-
+            }
+            else
+            {
+            gs.mapViewport.x = SDL_clamp(130, -280,200);
+            gs.mapViewport.y = SDL_clamp(-320,-400,-300);
+            }
             //draw background tiles
             for(GameObject &obj : gs.backgroundTiles)
             {
@@ -692,6 +711,16 @@ int main (int argc, char *argv[])
                 SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
                 SDL_RenderDebugText(state.renderer, 350, 350, "STOPPPPPPPPPP");
 
+            }
+            if(gs.player().data.player.state == PlayerState::cutscene)
+            {
+                gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
+                if (!CSppl && gs.levelNum == 1)
+                {
+                    CSppl = true;
+                    createTiles(state, gs, res, true);
+                }
+                introCutscene(gs);
             }
         // dialog thingy its working for me so 
             if (gs.player().data.player.state == PlayerState::dialog)
@@ -889,7 +918,6 @@ bool initialize(SDLState &state)
 }
 void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float deltaTime)
 {
-
         const float frameSize = 50; 
         const float spriteSize = 32;
         float srcX = obj.currentAnimation != -1
@@ -934,11 +962,10 @@ void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float del
 
 void update(const SDLState &state, GameState &gs, Resources &res, GameObject &obj, float deltaTime)
 {
+    float currentDirection = 0;
     if(obj.type == ObjectType::player)
     {
-        float currentDirection = 0;
         float Ydirection = 0;
-
 
         //check all X collisions before checking all Y collisions
         if (state.keys[SDL_SCANCODE_LEFT] && movementKeys ==true)
@@ -1013,6 +1040,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             {
                 obj.texture = res.textureIdle;
                 obj.currentAnimation = res.ANIM_PLAYER_IDLE;
+                break;
             }
         }
 
@@ -1126,6 +1154,72 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             }
         }
 }
+
+        else if(obj.type == ObjectType::NPC)
+        {
+            if(obj.data.NPC.state == NPCState::following)
+            {
+                const GameObject &player = gs.player();
+                const glm::vec2 npcCenter = obj.position + glm::vec2(
+                    obj.collider.x + obj.collider.w / 2.0f,
+                    obj.collider.y + obj.collider.h / 2.0f);
+                const glm::vec2 playerCenter = player.position + glm::vec2(
+                    player.collider.x + player.collider.w / 2.0f,
+                    player.collider.y + player.collider.h / 2.0f);
+                const float side = obj.data.NPC.NPCId == 0 ? -1.0f : 1.0f;
+                const float sideOffset =
+                    player.collider.w / 2.0f + obj.collider.w / 2.0f + 6.0f;
+                const glm::vec2 target = playerCenter + glm::vec2(side * sideOffset, 0.0f);
+                const glm::vec2 targetDir = target - npcCenter;
+                constexpr float followStopDistance = 4.0f;
+                const float distance = glm::length(targetDir);
+
+                if (distance > followStopDistance)
+                {
+                    obj.velocity = glm::normalize(targetDir) * obj.maxSpeedX;
+                }
+                else
+                {
+                    obj.velocity = glm::vec2(0);
+                }
+            }
+            else
+            {
+                obj.velocity = glm::vec2(0);
+            }
+
+            obj.position.x += obj.velocity.x * deltaTime;
+            for (auto &layer : gs.layers)
+            {
+                for (GameObject &objB : layer)
+                {
+                    if (&obj != &objB)
+                    {
+                        checkCollision(state, gs, res, obj, objB, deltaTime, true);
+                    }
+                }
+            }
+
+            obj.position.y += obj.velocity.y * deltaTime;
+            for (auto &layer : gs.layers)
+            {
+                for (GameObject &objB : layer)
+                {
+                    if (&obj != &objB)
+                    {
+                        checkCollision(state, gs, res, obj, objB, deltaTime, false);
+                    }
+                }
+            }
+        }
+        else
+        {
+            obj.velocity += currentDirection * obj.acceleration * deltaTime;
+            if (std::abs(obj.velocity.x) > obj.maxSpeedX)
+            {
+                obj.velocity.x = (obj.velocity.x > 0 ? 1.0f : -1.0f) * obj.maxSpeedX;
+            }
+        }
 }
 void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
     const SDL_FRect &rectA, const SDL_FRect &rectB, const SDL_FRect &rectC,
@@ -1197,7 +1291,21 @@ void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
                 }
                 }
             }
+        
+        else if (objA.type == ObjectType::NPC
+            && (objB.type == ObjectType::level || objB.type == ObjectType::player))
+        {
+            genericResponse();
+            if (xAxis)
+            {
+                objA.velocity.x = 0;
+            }
+            else
+            {
+                objA.velocity.y = 0;
+            }
         }
+    }
 void checkCollision(const SDLState &state, GameState &gs, Resources &res,
     GameObject &a, GameObject &b, float deltaTime, bool xAxis)
 {
@@ -1229,20 +1337,21 @@ void checkCollision(const SDLState &state, GameState &gs, Resources &res,
         collisionResponse(state, gs, res, rectA, rectB, rectC, a, b, deltaTime, xAxis);
     }
 }
-void createTiles(const SDLState &state, GameState &gs, const Resources &res)
+void createTiles(const SDLState &state, GameState &gs, const Resources &res,
+    bool cutsceneCharactersOnly)
 {
 
     
     short level1[MAP_ROWS][MAP_COLS]=
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 22, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 20, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 4, 4, 4, 4, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1262,9 +1371,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 8, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 21, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 20, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1286,7 +1395,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1308,10 +1417,10 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1331,10 +1440,10 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1355,9 +1464,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 8, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 21, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 20, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1373,6 +1482,31 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
+ 
+    short level1CS[MAP_ROWS][MAP_COLS]=
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    };
+    
     const auto loadMap = [&state, &gs, &res](short layer[MAP_ROWS][MAP_COLS])
     {
         const auto createObject = [&state] (int r, int c, SDL_Texture *texture, ObjectType type)
@@ -1391,25 +1525,59 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
         {
             switch(layer[r][c])
             {
-                case 1: //grass tile
+                case 1: //Wood wall
                 {
-                GameObject o = createObject(r, c, res.textureGrass, ObjectType::level);
+                GameObject o = createObject(r, c, res.textureWood, ObjectType::level);
                 gs.layers[LAYER_IDX_LEVEL].push_back(o);
                 break;
                 }
-                case 2://dirt tile
+                case 2://wood base S
                 {
-                GameObject o = createObject(r, c, res.textureDirt, ObjectType::level);
+                GameObject o = createObject(r, c, res.textureWoodBaseS, ObjectType::level);
                 gs.layers[LAYER_IDX_LEVEL].push_back(o);
                 break;
                 }
-                case 3:// test
+                case 3:// wood floor
                 {
                     GameObject o = createObject(r,c,res.textureTest, ObjectType::level);
                     gs.backgroundTiles.push_back(o);
                     break;
                 }
-                case 4: //player
+                case 4: // wood base N
+                {
+                    GameObject o = createObject(r, c, res.textureWoodBaseN, ObjectType::level);
+                    gs.layers[LAYER_IDX_LEVEL].push_back(o);
+                    break;
+                }
+                case 5: // wood base E
+                {
+                    GameObject o = createObject(r, c, res.textureWoodBaseE, ObjectType::level);
+                    gs.layers[LAYER_IDX_LEVEL].push_back(o);
+                    break;
+                }
+                case 6: //wood base W
+                {
+                    GameObject o = createObject(r, c, res.textureWoodBaseW, ObjectType::level);
+                    gs.layers[LAYER_IDX_LEVEL].push_back(o);
+                    break;
+                }
+                case 7:
+                {
+
+                }
+                case 8:
+                {
+                    
+                }
+                case 9:
+                {
+
+                }
+                case 10:
+                {
+
+                }
+                case 11: //player
                 {
                 //create our player
                 GameObject player = createObject(r, c, res.textureIdle, ObjectType::player);
@@ -1426,86 +1594,104 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res)
                 gs.PlayerIndex = gs.layers[LAYER_IDX_CHARACTER].size() - 1;
                 break;
                 }
-                case 5:
+                case 12: //first npc
+                {
+                    //NPC
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 0;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 13: //second npc
+                {
+                    //new NPC
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 1;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 20: //switch level
                 {
                     //switch lvl
                     GameObject o = createObject(r,c,res.textureEvent, ObjectType::switchlvl);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 6:
-                {
-                    //NPC
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
-                    NPC.data.NPC = NPCData();
-                    NPC.data.NPC.NPCId = 0;
-                    NPC.collider = 
-                    {
-                        .x = 11, .y = 6,
-                        .w = 12, .h = 26,
-                    };
-                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
-                    break;
-                }
-                case 7:
-                {
-                    //new NPC
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
-                    NPC.data.NPC = NPCData();
-                    NPC.data.NPC.NPCId = 1;
-                    NPC.collider = 
-                    {
-                        .x = 11, .y = 6,
-                        .w = 12, .h = 26,
-                    };
-                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
-                    break;
-                }
-                case 8:
+                case 21:
                 {
                     //end game event block
                     GameObject o = createObject(r, c, res.textureEvent, ObjectType::end);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 9:
+                case 22:
                 {
                     //cutscene event block
                     GameObject o = createObject(r,c,res.textureEvent, ObjectType::event);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
+
+                
             }
         }
     }
 
     };
-    //switch the level if the level num changes
-    switch(gs.levelNum)
+    if (cutsceneCharactersOnly)
     {
-        default:
+        if (gs.levelNum == 1)
         {
-            loadMap(level1ppl);
-            loadMap(level1);
-            break;
+            loadMap(level1CS);
         }
-        case 1:
+    }
+    else
+    {
+        //switch the level if the level num changes
+        switch(gs.levelNum)
         {
-            loadMap(level1ppl);
-            loadMap(level1);
-            break;
-        }
-        case 2:
-        {
-            loadMap(level2ppl);
-            loadMap(level2);
-            break;
-        }
-        case 3:
-        {
-            loadMap(level3ppl);
-            loadMap(level3);
-            break;
+            default:
+            {
+                loadMap(level1ppl);
+                loadMap(level1);
+                break;
+            }
+            case 1:
+            {
+                loadMap(level1ppl);
+                loadMap(level1);
+                if(CSppl == true)
+                {
+                    loadMap(level1CS);
+                }
+                break;
+            }
+            case 2:
+            {
+                loadMap(level2ppl);
+                loadMap(level2);
+                break;
+            }
+            case 3:
+            {
+                loadMap(level3ppl);
+                loadMap(level3);
+                break;
+            }
         }
     }
 
@@ -1744,4 +1930,17 @@ bool checkForSave(const SDLState &state, GameState &gs)
     {
         return false;
     }
+}
+void introCutscene(GameState &gs)
+{
+    movementKeys = false;
+    for (GameObject &character : gs.layers[LAYER_IDX_CHARACTER])
+    {
+        if (character.type == ObjectType::NPC
+            && (character.data.NPC.NPCId == 0 || character.data.NPC.NPCId == 1))
+        {
+            character.data.NPC.state = NPCState::following;
+        }
+    }
+
 }

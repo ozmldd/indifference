@@ -121,7 +121,6 @@ struct GameObject
 {
     ObjectType type;
     ObjectData data;
-    glm::vec2 position;
     float maxSpeedX;
     float direction;
     std::vector<Animation> animations;
@@ -129,6 +128,7 @@ struct GameObject
     SDL_Texture *texture;
     SDL_FRect collider;
     int spriteFrame;
+    glm::vec2 position, velocity, acceleration;
 
 
     GameObject() : data{.level = LevelData()}
@@ -136,7 +136,7 @@ struct GameObject
         type = ObjectType::level;
         maxSpeedX = 0;
         direction = 1;
-        position = glm::vec2(0);
+        position = velocity = acceleration = glm::vec2(0);
         currentAnimation = -1;
         texture = nullptr;
         spriteFrame = 1;
