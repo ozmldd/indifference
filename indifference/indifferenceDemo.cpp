@@ -97,6 +97,7 @@ struct GameState
     float Lvltransition = 0.0f;
     bool lvlswitching = false;
     bool lvlMapSwitched = false;
+    float introCS = 0.0f;
 
     GameState(const SDLState &state)
     {
@@ -332,7 +333,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime);
 void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
-void introCutscene(GameState &gs);
+void introCutscene(GameState &gs, float deltaTime);
 
 int main (int argc, char *argv[])
 {   
@@ -714,13 +715,23 @@ int main (int argc, char *argv[])
             }
             if(gs.player().data.player.state == PlayerState::cutscene)
             {
+                gs.introCS += deltaTime;
+                if(gs.introCS < 2.0f)
+                {
                 gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
                 if (!CSppl && gs.levelNum == 1)
                 {
                     CSppl = true;
                     createTiles(state, gs, res, true);
                 }
-                introCutscene(gs);
+                
+                introCutscene(gs, deltaTime);
+                }
+                else if (gs.introCS > 2.0f)
+                {
+                    gs.player().data.player.state = PlayerState::switchlvl;
+                    movementKeys = true;
+                }
             }
         // dialog thingy its working for me so 
             if (gs.player().data.player.state == PlayerState::dialog)
@@ -850,8 +861,8 @@ int main (int argc, char *argv[])
         {
             //debug info
             SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-            SDL_RenderDebugText(state.renderer, 5, 5, std::format("State: {}, playerindex:{}, movementKeys:{}",
-            static_cast<int>( gs.player().data.player.state), gs.PlayerIndex, movementKeys).c_str());
+            SDL_RenderDebugText(state.renderer, 5, 5, std::format("State: {}, playerindex:{}, movementKeys:{}, level: {}",
+            static_cast<int>( gs.player().data.player.state), gs.PlayerIndex, movementKeys, gs.levelNum).c_str());
         }
 
         if(gs.lvlswitching)
@@ -1931,8 +1942,8 @@ bool checkForSave(const SDLState &state, GameState &gs)
         return false;
     }
 }
-void introCutscene(GameState &gs)
-{
+void introCutscene(GameState &gs, float deltaTime)
+{     
     movementKeys = false;
     for (GameObject &character : gs.layers[LAYER_IDX_CHARACTER])
     {
@@ -1942,5 +1953,4 @@ void introCutscene(GameState &gs)
             character.data.NPC.state = NPCState::following;
         }
     }
-
 }
