@@ -130,8 +130,8 @@ struct Resources
     const int ANIM_AGENT_WALK = 0;
 
     std::vector<SDL_Texture *> textures;
-    SDL_Texture *textureIdle, *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureTest, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
-    , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition;
+    SDL_Texture *textureIdle, *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureWoodFloor, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
+    , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition, *textureStoneFloor;
     
     //music stuffff
     std::vector<MIX_Audio *> audioClips;
@@ -186,7 +186,8 @@ struct Resources
         textureWoodBaseN = loadTexture(state.renderer, "assets/texture/base woodN.png");
         textureWoodBaseE = loadTexture(state.renderer, "assets/texture/base woodE.png");
         textureWoodBaseW = loadTexture(state.renderer, "assets/texture/base woodW.png");
-        textureTest = loadTexture(state.renderer, "assets/texture/test.png");
+        textureWoodFloor = loadTexture(state.renderer, "assets/texture/test.png");
+        textureStoneFloor = loadTexture(state.renderer, "assets/texture/stoneFloor.png");
         textureIdk = loadTexture(state.renderer, "assets/texture/idk.png");
         textureEvent = loadTexture(state.renderer, "assets/texture/event.block.png");
         textureNPC = loadTexture(state.renderer, "assets/texture/NPC.png");
@@ -592,8 +593,7 @@ int main (int argc, char *argv[])
         
         //perform drawing commands
         SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
-        SDL_RenderClear(state.renderer);
-        
+        SDL_RenderClear(state.renderer); 
 
         //playing game
         if(gs.mode == gameMode::playing)
@@ -663,6 +663,10 @@ int main (int argc, char *argv[])
                 }
             }
 
+            if(gs.levelNum == 2)
+            {
+                dialog(state,gs,res);
+            }
             //calculate viewport position
             if(gs.levelNum > 1)
             {
@@ -715,22 +719,25 @@ int main (int argc, char *argv[])
             }
             if(gs.player().data.player.state == PlayerState::cutscene)
             {
-                gs.introCS += deltaTime;
-                if(gs.introCS < 2.0f)
+                if(gs.levelNum == 1)
                 {
-                gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
-                if (!CSppl && gs.levelNum == 1)
-                {
-                    CSppl = true;
-                    createTiles(state, gs, res, true);
-                }
-                
-                introCutscene(gs, deltaTime);
-                }
-                else if (gs.introCS > 2.0f)
-                {
-                    gs.player().data.player.state = PlayerState::switchlvl;
-                    movementKeys = true;
+                    gs.introCS += deltaTime;
+                    if(gs.introCS < 3.0f)
+                    {
+                    gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
+                    if (!CSppl && gs.levelNum == 1)
+                    {
+                        CSppl = true;
+                        createTiles(state, gs, res, true);
+                    }
+                    
+                    introCutscene(gs, deltaTime);
+                    }
+                    else if (gs.introCS > 3.0f)
+                    {
+                        gs.player().data.player.state = PlayerState::switchlvl;
+                        movementKeys = true;
+                    }
                 }
             }
         // dialog thingy its working for me so 
@@ -1192,6 +1199,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                 else
                 {
                     obj.velocity = glm::vec2(0);
+                    obj.data.NPC.state = NPCState::standing;
                 }
             }
             else
@@ -1351,19 +1359,18 @@ void checkCollision(const SDLState &state, GameState &gs, Resources &res,
 void createTiles(const SDLState &state, GameState &gs, const Resources &res,
     bool cutsceneCharactersOnly)
 {
-
     
     short level1[MAP_ROWS][MAP_COLS]=
     {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 22, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 20, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 4, 4, 4, 4, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1380,13 +1387,13 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
     short level2[MAP_ROWS][MAP_COLS]=
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 21, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 20, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 21, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 20, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1550,7 +1557,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 3:// wood floor
                 {
-                    GameObject o = createObject(r,c,res.textureTest, ObjectType::level);
+                    GameObject o = createObject(r,c,res.textureWoodFloor, ObjectType::level);
                     gs.backgroundTiles.push_back(o);
                     break;
                 }
@@ -1572,9 +1579,11 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 7:
+                case 7://stone floor
                 {
-
+                    GameObject o = createObject(r,c,res.textureStoneFloor, ObjectType::level);
+                    gs.backgroundTiles.push_back(o);
+                    break;
                 }
                 case 8:
                 {
@@ -1652,7 +1661,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 case 22:
                 {
                     //cutscene event block
-                    GameObject o = createObject(r,c,res.textureEvent, ObjectType::event);
+                    GameObject o = createObject(r,c,res.textureWoodFloor, ObjectType::event);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
