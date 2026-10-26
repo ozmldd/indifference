@@ -921,6 +921,7 @@ int main (int argc, char *argv[])
                 movementKeys = false;
                 choosing = true;
                 playerChoice(state, gs, deltaTime);
+                
             }
             
 
@@ -1988,7 +1989,7 @@ void clearMap(GameState &gs)
 
     gs.levelNum ++;
 
-    if (gs.levelNum > 3) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
+    if (gs.levelNum > 4) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
 }
 
 void dialog(const SDLState &state, GameState &gs, const Resources &res)
@@ -2275,46 +2276,36 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     {
         if(choiceTime < 3.0f)
         {
+            SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+            SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
 
-        
-        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
-        SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
-        gs.player().data.player.state = PlayerState::switchlvl;
-        gs.levelNum++;
+            gs.levelNum++;
         }
     }
     else if(gs.choice2 == true)
     {
-                if(choiceTime < 3.0f)
-        {
-            
-        
-        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
-        SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
-        gs.player().data.player.state = PlayerState::switchlvl;
-        gs.levelNum++;
+        if(choiceTime < 3.0f)
+        {   
+            SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+            SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+            gs.levelNum++;
         }
     }
     else if(gs.choice3 == true)
     {
-                if(choiceTime < 3.0f)
-        {
-            
-        
-        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
-        SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
-        gs.player().data.player.state = PlayerState::switchlvl;
-        gs.levelNum++;
+        if(choiceTime < 3.0f)
+        {  
+            //find out why i can't go to level 4
+            SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+            SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+            gs.levelNum++;
         }
     }
     else
     {
-
-        
         SDL_RenderDebugText(state.renderer, 155, 270, "So who do you think it is? Choose.");
         SDL_RenderDebugText(state.renderer, 150, 320, "(1)");
         SDL_RenderDebugText(state.renderer, 290, 320, "(2)");
-        SDL_RenderDebugText(state.renderer, 370, 320, "(3)");
-        
+        SDL_RenderDebugText(state.renderer, 370, 320, "(3)");     
     }
 }
