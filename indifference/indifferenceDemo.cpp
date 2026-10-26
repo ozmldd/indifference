@@ -2273,35 +2273,48 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
 
     if(gs.choice1 == true)
     {
+        if(choiceTime < 3.0f)
+        {
+
+        
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
         SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
         gs.player().data.player.state = PlayerState::switchlvl;
         gs.levelNum++;
+        }
     }
     else if(gs.choice2 == true)
     {
+                if(choiceTime < 3.0f)
+        {
+            
+        
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
         SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
         gs.player().data.player.state = PlayerState::switchlvl;
         gs.levelNum++;
+        }
     }
     else if(gs.choice3 == true)
     {
+                if(choiceTime < 3.0f)
+        {
+            
+        
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to need");
         SDL_RenderDebugText(state.renderer, 155, 320, "your talents");
         gs.player().data.player.state = PlayerState::switchlvl;
         gs.levelNum++;
+        }
     }
     else
     {
-        if(choiceTime < 4.0f)
-        {
 
         
         SDL_RenderDebugText(state.renderer, 155, 270, "So who do you think it is? Choose.");
         SDL_RenderDebugText(state.renderer, 150, 320, "(1)");
         SDL_RenderDebugText(state.renderer, 290, 320, "(2)");
         SDL_RenderDebugText(state.renderer, 370, 320, "(3)");
-        }
+        
     }
 }
