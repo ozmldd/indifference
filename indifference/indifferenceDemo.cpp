@@ -55,6 +55,7 @@ const float SKIP_DELAY = 5.0f;
 bool title = true;
 const float FLASH_DURATION = 0.15f;
 bool gameFin = false;
+bool response = false;
 std::string credits [6]
 {
     "Thanks For Playing!",
@@ -104,6 +105,10 @@ struct GameState
     bool choice2 = false;
     bool choice3 = false;
     float choiceElapsed = 0.0f;
+    float lvl3IntroWait = 0.0f;
+    float dialogSkip2 = 0.0f;
+    float dialogSkip3 = 0.0f;
+    float lvl3Wait = 0.0f;
 
     GameState(const SDLState &state)
     {
@@ -345,6 +350,7 @@ bool checkForSave(const SDLState &state, GameState &gs);
 void introCutscene(GameState &gs, float deltaTime);
 bool doneTalking(const GameState &gs);
 void playerChoice(SDLState &state, GameState &gs,float deltaTime);
+void charSpeech(SDLState &state, GameState &gs,float deltaTime);
 
 int main (int argc, char *argv[])
 {   
@@ -420,10 +426,7 @@ int main (int argc, char *argv[])
     bool running = true;
     float wait = 0.0f;
     float dialogSkip = 0.0f;
-    float dialogSkip2 = 0.0f;
-    bool response = false;
-    float lvl3Wait = 0.0f;
-    float lvl3IntroWait = 0.0f;
+
     while(running)
     {
         uint64_t nowTime = SDL_GetTicks();
@@ -719,8 +722,8 @@ int main (int argc, char *argv[])
             {
                 if(doneTalking(gs))
                 {
-                    lvl3Wait += deltaTime;
-                    if(lvl3Wait > 3.0f)
+                    gs.lvl3Wait += deltaTime;
+                    if(gs.lvl3Wait > 3.0f)
                     {
                         gs.player().data.player.state = PlayerState::choice;
                     }
@@ -865,62 +868,12 @@ int main (int argc, char *argv[])
             //3rd level ish
             if (gs.levelNum == 3)
             {
-                if(response == false)
-                {
-                    lvl3IntroWait += deltaTime;
-                    movementKeys = false;
-                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                    SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                    SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                    SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
-                    if(lvl3IntroWait > 2.0f)
-                    {
-                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
-                    }
-                }
-                else if (response == true)
-                {
-                    dialogSkip2 += deltaTime;
-                    movementKeys = false;
-                    if(dialogSkip2 < 3.0f)
-                    {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
-                    }
-                    else if (dialogSkip2 > 3.0f && dialogSkip2 < 6.0f)
-                    {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
-                    }
-                    else
-                    {
-                        movementKeys = true;
-                    }
-                }
-
+                charSpeech(state, gs, deltaTime);
             }
             else
             {
-                lvl3IntroWait = 0.0f;
+                gs.lvl3IntroWait = 0.0f;
+                response = false;
             }
 
             if (gs.player().data.player.state == PlayerState::choice)
@@ -1661,7 +1614,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
     
-    short level3[MAP_ROWS][MAP_COLS]=
+    short level3[MAP_ROWS][MAP_COLS]=//choosing
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1708,7 +1661,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level4[MAP_ROWS][MAP_COLS]=
+        short level4[MAP_ROWS][MAP_COLS]=//room
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1754,7 +1707,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level5[MAP_ROWS][MAP_COLS]=
+        short level5[MAP_ROWS][MAP_COLS]=//choosing change this to ppl
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1777,7 +1730,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level6[MAP_ROWS][MAP_COLS]=
+        short level6[MAP_ROWS][MAP_COLS]=//room 
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1800,7 +1753,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level7[MAP_ROWS][MAP_COLS]=
+        short level7[MAP_ROWS][MAP_COLS]=//choosing change this to ppl
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1823,7 +1776,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level8[MAP_ROWS][MAP_COLS]=
+        short level8[MAP_ROWS][MAP_COLS]=//room
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1846,7 +1799,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level9[MAP_ROWS][MAP_COLS]=
+        short level9[MAP_ROWS][MAP_COLS]=//choosing change this to ppl 
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1869,7 +1822,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level10[MAP_ROWS][MAP_COLS]=
+        short level10[MAP_ROWS][MAP_COLS]=//cutscene
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2124,9 +2077,39 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 loadMap(level3);
                 break;
             }
-            case 4:
+            case 4://room
             {
                 loadMap(level4);
+                loadMap(level4ppl);
+            }
+            case 5:
+            {
+                loadMap(level5);
+                loadMap(level3ppl);
+            }
+            case 6:
+            {
+                loadMap(level6);
+                loadMap(level4ppl);
+            }
+            case 7:
+            {
+                loadMap(level5);
+                loadMap(level3ppl);
+            }
+            case 8:
+            {
+                loadMap(level6);
+                loadMap(level4ppl);
+            }
+            case 9:
+            {
+                loadMap(level5);
+                loadMap(level3ppl);
+            }
+            case 10://last
+            {
+                loadMap(level6);
                 loadMap(level4ppl);
             }
         }
@@ -2138,7 +2121,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
     {
 
     }
-    if(gs.levelNum >= 4)
+    if(gs.levelNum >= 6)
     {
         gs.flash = true;
     }
@@ -2155,7 +2138,7 @@ void clearMap(GameState &gs)
 
     gs.levelNum ++;
 
-    if (gs.levelNum > 4) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
+    if (gs.levelNum > 6) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
 }
 
 void dialog(const SDLState &state, GameState &gs, const Resources &res)
@@ -2478,5 +2461,181 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         SDL_RenderDebugText(state.renderer, 150, 320, "(1)");
         SDL_RenderDebugText(state.renderer, 270, 320, "(2)");
         SDL_RenderDebugText(state.renderer, 390, 320, "(3)");
+    }
+}
+void charSpeech(SDLState &state, GameState &gs, float deltaTime)
+{
+    switch(gs.levelNum)
+    {
+        case 1:
+        {
+
+        }
+        case 2:
+        {
+
+        }
+        case 3:
+        {
+            if(response == false)
+                {
+                    gs.lvl3IntroWait += deltaTime;
+                    movementKeys = false;
+                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                    SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                    SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                    SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
+                    if(gs.lvl3IntroWait > 2.0f)
+                    {
+                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+                    }
+                }
+                else if (response == true)
+                {
+                    gs.dialogSkip2 += deltaTime;
+                    movementKeys = false;
+                    if(gs.dialogSkip2 < 3.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
+                    }
+                    else if (gs.dialogSkip2 > 3.0f && gs.dialogSkip2 < 6.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
+                    }
+                    else
+                    {
+                        movementKeys = true;
+                    }
+        }
+        case 4:
+        {
+                    gs.dialogSkip3 += deltaTime;
+                    movementKeys = false;
+                    if(gs.dialogSkip3 < 3.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
+                    }
+                    else if (gs.dialogSkip3 > 3.0f && gs.dialogSkip3 < 6.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
+                    }
+                    else
+                    {
+                        movementKeys = true;
+                    }
+        }
+        case 5://edit this one later
+        {
+            if(response == false)
+                {
+                    gs.lvl3IntroWait += deltaTime;
+                    movementKeys = false;
+                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                    SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                    SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                    SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
+                    if(gs.lvl3IntroWait > 2.0f)
+                    {
+                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+                    }
+                }
+                else if (response == true)
+                {
+                    gs.dialogSkip2 += deltaTime;
+                    movementKeys = false;
+                    if(gs.dialogSkip2 < 3.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Alright just like last time,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "choose the sick one.");
+                    }
+                    else if (gs.dialogSkip2 > 3.0f && gs.dialogSkip2 < 6.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
+                    }
+                    else
+                    {
+                        movementKeys = true;
+                    }
+                }
+            }
+            case 6:
+            {
+
+            }
+            case 7:
+            {
+
+            }
+            case 8:
+            {
+
+            }
+            case 9:
+            {
+
+            }
+            case 10:
+            {
+
+            }
+        }
     }
 }
