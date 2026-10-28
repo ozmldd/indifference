@@ -108,6 +108,7 @@ struct GameState
     float lvl3IntroWait = 0.0f;
     float dialogSkip2 = 0.0f;
     float dialogSkip3 = 0.0f;
+    float dialogSkip4 = 0.0f;
     float lvl3Wait = 0.0f;
 
     GameState(const SDLState &state)
@@ -513,11 +514,10 @@ int main (int argc, char *argv[])
                     if(event.key.scancode == SDL_SCANCODE_F){
                         gs.debugMode = !gs.debugMode;
                     }
-                    else if (event.key.scancode == SDL_SCANCODE_F11)
+                    if (event.key.scancode == SDL_SCANCODE_F11)
                     {
                         state.fullscreen = !state.fullscreen;
                         SDL_SetWindowFullscreen(state.window, state.fullscreen);
-
                     }
                     break;
                 }
@@ -792,6 +792,7 @@ int main (int argc, char *argv[])
                 SDL_RenderDebugText(state.renderer, 350, 350, "STOPPPPPPPPPP");
 
             }
+            
             if(gs.player().data.player.state == PlayerState::cutscene)
             {
                 if(gs.levelNum == 1)
@@ -869,6 +870,7 @@ int main (int argc, char *argv[])
                 }
             }
             //Level-three dialogue
+            //The text box stays there since it doesn't stay as PlayerState::switchlvl, rather it goes back to PlayerState::choice
             if (gs.levelNum == 3
                 && gs.player().data.player.state != PlayerState::choice
                 && gs.player().data.player.state != PlayerState::switchlvl)
@@ -937,6 +939,10 @@ int main (int argc, char *argv[])
                 playerChoice(state, gs, deltaTime);
             }
             if(gs.levelNum == 4)
+            {
+                charSpeech(state, gs, deltaTime);
+            }
+            if(gs.levelNum == 5)
             {
                 charSpeech(state, gs, deltaTime);
             }
@@ -1559,7 +1565,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 22, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 32, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1584,9 +1590,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 21, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 31, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 20, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 30, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1725,7 +1731,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 20, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 30, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1793,9 +1799,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 21, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 31, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 20, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 30, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1839,9 +1845,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 21, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 31, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 20, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 30, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1885,9 +1891,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 21, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 31, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 20, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 30, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2067,21 +2073,67 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                     gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
                     break;
                 }
-                case 20: //switch level
+                case 17:
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 5;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 18:
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 6;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 19:
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 7;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 20:
+                {
+                    break;
+                }
+                case 30: //switch level
                 {
                     //switch lvl
                     GameObject o = createObject(r,c,res.textureEvent, ObjectType::switchlvl);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 21:
+                case 31:
                 {
                     //end game event block
                     GameObject o = createObject(r, c, res.textureEvent, ObjectType::end);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 22:
+                case 32:
                 {
                     //cutscene event block
                     GameObject o = createObject(r,c,res.textureWoodFloor, ObjectType::event);
@@ -2318,6 +2370,22 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             SDL_RenderDebugText(state.renderer, 150, 290, "doing, these people are crazy. There is");
             SDL_RenderDebugText(state.renderer, 150, 310, "no virus but choose me if you have to.");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 5:
+        {
+            break;
+        }
+        case 6:
+        {
+            break;
+        }
+        case 7:
+        {
+            break;
+        }
+        case 8 :
+        {
             break;
         }
     }
@@ -2623,7 +2691,7 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. Don't be");
                         SDL_RenderDebugText(state.renderer, 155, 310, "scared, they're here for your safety.");
                     }
-            else
+                    else
                     {
                         movementKeys = true;
                     }
@@ -2631,28 +2699,9 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
         }
         case 5://edit this one later
         {
-            if(response == false)
-                {
-                    gs.lvl3IntroWait += deltaTime;
-                    movementKeys = false;
-                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                    SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                    SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                    SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
-                    if(gs.lvl3IntroWait > 2.0f)
-                    {
-                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
-                    }
-                }
-                else if (response == true)
-                {
-                    gs.dialogSkip2 += deltaTime;
-                    movementKeys = false;
-                    if(gs.dialogSkip2 < 3.0f)
+            gs.dialogSkip4 += deltaTime;
+            movementKeys = false;
+                    if(gs.dialogSkip4 < 4.0f)
                     {
                         SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
                         SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
@@ -2664,28 +2713,16 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_RenderDebugText(state.renderer, 155, 270, "Alright just like last time,");
                         SDL_RenderDebugText(state.renderer, 155, 290, "choose the sick one.");
                     }
-                    else if (gs.dialogSkip2 > 3.0f && gs.dialogSkip2 < 6.0f)
-                    {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
-                    }
-                    else
+                    else 
                     {
                         movementKeys = true;
                     }
-                }
+
                 break;
             }
             case 6:
             {
+
                 break;
             }
             case 7:
