@@ -348,6 +348,7 @@ void save(const SDLState &state, GameState &gs);
 void readSave(const SDLState &staet, GameState &gs, saveStuff &stf);
 bool checkForSave(const SDLState &state, GameState &gs);
 void introCutscene(GameState &gs, float deltaTime);
+bool introNPCsBesidePlayer(GameState &gs);
 bool doneTalking(const GameState &gs);
 void playerChoice(SDLState &state, GameState &gs,float deltaTime);
 void charSpeech(SDLState &state, GameState &gs,float deltaTime);
@@ -480,9 +481,11 @@ int main (int argc, char *argv[])
                     {
                         gs.mode = gameMode::title;
                     }
-                    if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing && gs.levelNum == 3)
+                    if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
+                        && gs.levelNum == 3 && !response && gs.lvl3IntroWait >= 2.0f)
                     {
                         response = true;
+                        gs.dialogSkip2 = 0.0f;
                     }
                     if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
                     && gs.levelNum == 3 && gs.player().data.player.state == PlayerState::choice
@@ -793,28 +796,28 @@ int main (int argc, char *argv[])
             {
                 if(gs.levelNum == 1)
                 {
-                    gs.introCS += deltaTime;
-                    if(gs.introCS < 3.0f)
-                    {
                     gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
-                    if (!CSppl && gs.levelNum == 1)
+                    if (!CSppl)
                     {
                         CSppl = true;
                         createTiles(state, gs, res, true);
                     }
                     
-                    introCutscene(gs, deltaTime);
-                    }
-                    else if (gs.introCS > 3.0f)
+                    if (introNPCsBesidePlayer(gs))
                     {
                         gs.player().data.player.state = PlayerState::switchlvl;
                         movementKeys = true;
+                    }
+                    else
+                    {
+                        introCutscene(gs, deltaTime);
                     }
                 }
             }
         // dialog thingy its working for me so 
             if (gs.player().data.player.state == PlayerState::dialog)
             {
+                movementKeys = false;
                 dialog(state, gs, res);
             }
 
@@ -847,7 +850,7 @@ int main (int argc, char *argv[])
                 {
 
                     gs.introCS += deltaTime;
-                    if(gs.introCS < 3.0f)
+                    if(gs.introCS < 1.0f)
                     {
                     gs.player().currentAnimation = res.ANIM_PLAYER_IDLE;
                     if (!CSppl && gs.levelNum == 1)
@@ -858,17 +861,69 @@ int main (int argc, char *argv[])
                     
                     introCutscene(gs, deltaTime);
                     }
-                    else if (gs.introCS > 3.0f)
+                    else if (gs.introCS > 1.0f)
                     {
                         gs.player().data.player.state = PlayerState::switchlvl;
-                        movementKeys = true;
+
                     }
                 }
             }
-            //3rd level ish
-            if (gs.levelNum == 3)
+            //Level-three dialogue
+            if (gs.levelNum == 3
+                && gs.player().data.player.state != PlayerState::choice
+                && gs.player().data.player.state != PlayerState::switchlvl)
             {
-                charSpeech(state, gs, deltaTime);
+                movementKeys = false;
+                if (!response)
+                {
+                    gs.lvl3IntroWait += deltaTime;
+                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                    SDL_FRect textBox { 143, 240, 350, 100 };
+                    SDL_RenderFillRect(state.renderer, &textBox);
+                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                    SDL_RenderRect(state.renderer, &textBox);
+                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
+                    if (gs.lvl3IntroWait >= 2.0f)
+                    {
+                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+                    }
+                }
+                else
+                {
+                    gs.dialogSkip2 += deltaTime;
+                    if (gs.dialogSkip2 < 4.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect textBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &textBox);
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &textBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
+                    }
+                    else if (gs.dialogSkip2 < 7.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect textBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &textBox);
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &textBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "by talking to them and goog luck.");
+                    }
+                    else
+                    {
+                        movementKeys = true;
+                        if(gs.player().data.player.state == PlayerState::dialog)
+                        {
+                        movementKeys = false;
+                        }
+                    }
+                }
             }
             else
             {
@@ -881,7 +936,10 @@ int main (int argc, char *argv[])
                 movementKeys = false;
                 playerChoice(state, gs, deltaTime);
             }
-            
+            if(gs.levelNum == 4)
+            {
+                charSpeech(state, gs, deltaTime);
+            }
 
             if (gs.player().data.player.state == PlayerState::ended)
             {
@@ -1667,7 +1725,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 20, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2081,36 +2139,43 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             {
                 loadMap(level4);
                 loadMap(level4ppl);
+                break;
             }
             case 5:
             {
                 loadMap(level5);
                 loadMap(level3ppl);
+                break;
             }
             case 6:
             {
                 loadMap(level6);
                 loadMap(level4ppl);
+                break;
             }
             case 7:
             {
                 loadMap(level5);
                 loadMap(level3ppl);
+                break;
             }
             case 8:
             {
                 loadMap(level6);
                 loadMap(level4ppl);
+                break;
             }
             case 9:
             {
                 loadMap(level5);
                 loadMap(level3ppl);
+                break;
             }
             case 10://last
             {
                 loadMap(level6);
                 loadMap(level4ppl);
+                break;
             }
         }
     }
@@ -2208,7 +2273,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             else
             {
                 SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[0][dialogLine].c_str());
-                SDL_RenderDebugText(state.renderer, 315, 325, "What do you mean? (W) >>");
+                SDL_RenderDebugText(state.renderer, 295, 325, "What do you mean? (W) >>");
             }
             break;
         }
@@ -2428,6 +2493,40 @@ void introCutscene(GameState &gs, float deltaTime)
         }
     }
 }
+bool introNPCsBesidePlayer(GameState &gs)
+{
+    const GameObject &player = gs.player();
+    const glm::vec2 playerCenter = player.position + glm::vec2(
+        player.collider.x + player.collider.w / 2.0f,
+        player.collider.y + player.collider.h / 2.0f);
+    std::array<bool, 2> foundNPCs{};
+
+    for (const GameObject &character : gs.layers[LAYER_IDX_CHARACTER])
+    {
+        if (character.type != ObjectType::NPC
+            || (character.data.NPC.NPCId != 0 && character.data.NPC.NPCId != 1))
+        {
+            continue;
+        }
+
+        const glm::vec2 npcCenter = character.position + glm::vec2(
+            character.collider.x + character.collider.w / 2.0f,
+            character.collider.y + character.collider.h / 2.0f);
+        const float side = character.data.NPC.NPCId == 0 ? -1.0f : 1.0f;
+        const float sideOffset =
+            player.collider.w / 2.0f + character.collider.w / 2.0f + 6.0f;
+        const glm::vec2 target = playerCenter + glm::vec2(side * sideOffset, 0.0f);
+        constexpr float followStopDistance = 4.0f;
+
+        if (glm::length(target - npcCenter) > followStopDistance)
+        {
+            return false;
+        }
+        foundNPCs[character.data.NPC.NPCId] = true;
+    }
+
+    return foundNPCs[0] && foundNPCs[1];
+}
 bool doneTalking(const GameState &gs)
 {
     return gs.patientsTalked[0] && gs.patientsTalked[1] && gs.patientsTalked[2];
@@ -2440,7 +2539,8 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
     SDL_RenderRect(state.renderer, &levelTwoTextBox);
     SDL_RenderDebugText(state.renderer, 155, 250, "???");
-    if(gs.choice1 || gs.choice2 || gs.choice3)
+
+    if (gs.choice1 || gs.choice2 || gs.choice3)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
         SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
@@ -2469,70 +2569,35 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
     {
         case 1:
         {
-
+            break;
         }
         case 2:
         {
-
+            break;
         }
         case 3:
         {
-            if(response == false)
-                {
-                    gs.lvl3IntroWait += deltaTime;
-                    movementKeys = false;
-                    SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                    SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                    SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                    SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                    SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                    SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                    SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
-                    if(gs.lvl3IntroWait > 2.0f)
-                    {
-                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
-                    }
-                }
-                else if (response == true)
-                {
-                    gs.dialogSkip2 += deltaTime;
-                    movementKeys = false;
-                    if(gs.dialogSkip2 < 3.0f)
-                    {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
-                    }
-                    else if (gs.dialogSkip2 > 3.0f && gs.dialogSkip2 < 6.0f)
-                    {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
-
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
-                    }
-                    else
-                    {
-                        movementKeys = true;
-                    }
+            
+            break;
         }
+
         case 4:
         {
-                    gs.dialogSkip3 += deltaTime;
-                    movementKeys = false;
-                    if(gs.dialogSkip3 < 3.0f)
+            gs.dialogSkip3 += deltaTime;
+            movementKeys = false;
+            if(gs.dialogSkip3 < 5.0f)
+            {
+                SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                SDL_RenderDebugText(state.renderer, 155, 270, "Thanks for picking him out, we needed");
+                SDL_RenderDebugText(state.renderer, 155, 290, "someone who can find who has the virus");
+            }
+            else if (gs.dialogSkip3 > 5.0f && gs.dialogSkip3 < 11.0f)
                     {
                         SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
                         SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
@@ -2541,10 +2606,11 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
                         SDL_RenderRect(state.renderer, &levelTwoTextBox);
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Good we need you to do something for us,");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "than you can return home");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Oh and we'll need you for a little more.");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "We need you to pick out some more people");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "with the disease we trust in your decision");
                     }
-                    else if (gs.dialogSkip3 > 3.0f && gs.dialogSkip3 < 6.0f)
+            else if (gs.dialogSkip3 > 11.0f && gs.dialogSkip3 < 15.0f)
                     {
                         SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
                         SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
@@ -2553,14 +2619,15 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
                         SDL_RenderRect(state.renderer, &levelTwoTextBox);
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "Talk to them if you need.");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Just go through the door, right in ");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. Don't be");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "scared, they're here for your safety.");
                     }
-                    else
+            else
                     {
                         movementKeys = true;
                     }
+            break;
         }
         case 5://edit this one later
         {
@@ -2615,27 +2682,27 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         movementKeys = true;
                     }
                 }
+                break;
             }
             case 6:
             {
-
+                break;
             }
             case 7:
             {
-
+                break;
             }
             case 8:
             {
-
+                break;
             }
             case 9:
             {
-
+                break;
             }
             case 10:
             {
-
+                break;
             }
         }
     }
-}
