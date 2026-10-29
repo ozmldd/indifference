@@ -100,13 +100,16 @@ struct GameState
     bool lvlMapSwitched = false;
     float introCS = 0.0f;
     int dialogLimiter = 0;
-    std::array<bool, 3> patientsTalked{};
+    std::array<bool, 12> patientsTalked{};
     float choiceElapsed = 0.0f;
     float lvl3IntroWait = 0.0f;
     float dialogSkip2 = 0.0f;
     float dialogSkip3 = 0.0f;
     float dialogSkip4 = 0.0f;
     float lvl3Wait = 0.0f;
+    float lvl5Wait = 0.0f;
+    float lvl7Wait = 0.0f;
+    float lvl9Wait = 0.0f;
 
     GameState(const SDLState &state)
     {
@@ -331,6 +334,9 @@ struct choiceHolder
     bool choice1 = false;
     bool choice2 = false;
     bool choice3 = false;
+    bool choice4 = false;
+    bool choice5 = false;
+    bool choice6 = false;
 };
 
 choiceHolder ch;
@@ -469,7 +475,7 @@ int main (int argc, char *argv[])
                         if ((dialogLine == 1 && gs.dialogLimiter <= 3)
                             || (dialogLine == 2 && gs.dialogLimiter <= 6 && gs.dialogLimiter > 3))
                         {
-                            if (activeNPCId >= 2 && activeNPCId <= 4)
+                            if (activeNPCId >= 2 && activeNPCId <= 12)
                             {
                                 gs.patientsTalked[activeNPCId - 2] = true;
                             }
@@ -513,6 +519,30 @@ int main (int argc, char *argv[])
                     && !ch.choice1 && !ch.choice2 && !ch.choice3)
                     {
                         ch.choice3 = true;
+                    }
+                        if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
+                        && gs.levelNum == 5 && !response)
+                    {
+                        response = true;
+                        gs.dialogSkip2 = 0.0f;
+                    }
+                    if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice4 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice5 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_3 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice6 = true;
                     }
 
                     break;
@@ -659,6 +689,10 @@ int main (int argc, char *argv[])
             {
                 movementKeys = false;
             }
+            if(ch.choice1 || ch.choice2 || ch.choice3)
+            {
+                std::cout<<"working"<<'\n';
+            }
 
             touchingNPC = false;
             touchingNPCId = -1;
@@ -735,6 +769,17 @@ int main (int argc, char *argv[])
                 {
                     gs.lvl3Wait += deltaTime;
                     if(gs.lvl3Wait > 3.0f)
+                    {
+                        gs.player().data.player.state = PlayerState::choice;
+                    }
+                }
+            }
+            else if (gs.levelNum == 5 && !gs.lvlswitching)
+            {
+                if(doneTalking(gs))
+                {
+                    gs.lvl5Wait += deltaTime;
+                    if(gs.lvl5Wait > 3.0f)
                     {
                         gs.player().data.player.state = PlayerState::choice;
                     }
@@ -922,7 +967,7 @@ int main (int argc, char *argv[])
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
                         SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
                         SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "by talking to them and goog luck.");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "by talking to them and good luck.");
                     }
                     else
                     {
@@ -2669,7 +2714,15 @@ bool introNPCsBesidePlayer(GameState &gs)
 }
 bool doneTalking(const GameState &gs)
 {
-    return gs.patientsTalked[0] && gs.patientsTalked[1] && gs.patientsTalked[2];
+    //fix error here and make it universal or just keep this whatever is easier
+    if(gs.levelNum == 5)
+    {
+        return gs.patientsTalked[3] && gs.patientsTalked[4] && gs.patientsTalked [5];
+    }
+    else if(gs.levelNum == 3)
+    {
+        return gs.patientsTalked[0] && gs.patientsTalked[1] && gs.patientsTalked[2];
+    }
 }
 void playerChoice(SDLState &state, GameState &gs, float deltaTime)
 {
@@ -2681,6 +2734,51 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     SDL_RenderDebugText(state.renderer, 155, 250, "???");
 
     if (ch.choice1 || ch.choice2 || ch.choice3)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice4)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice5)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice6)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
         SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
