@@ -337,6 +337,12 @@ struct choiceHolder
     bool choice4 = false;
     bool choice5 = false;
     bool choice6 = false;
+    bool choice7 = false;
+    bool choice8 = false;
+    bool choice9 = false;
+    bool choice10 = false;
+    bool choice11 = false;
+    bool choice12 = false;
 };
 
 choiceHolder ch;
@@ -496,6 +502,9 @@ int main (int argc, char *argv[])
                     {
                         gs.mode = gameMode::title;
                     }
+                    //********************/
+                    //level 3
+                    //********************/
                     if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
                         && gs.levelNum == 3 && !response && gs.lvl3IntroWait >= 2.0f)
                     {
@@ -520,6 +529,9 @@ int main (int argc, char *argv[])
                     {
                         ch.choice3 = true;
                     }
+                    //********************/
+                    //level 5
+                    //********************/
                         if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
                         && gs.levelNum == 5 && !response)
                     {
@@ -544,6 +556,61 @@ int main (int argc, char *argv[])
                     {
                         ch.choice6 = true;
                     }
+                    //********************/
+                    //level 7
+                    //********************/
+                        if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
+                        && gs.levelNum == 7 && !response)
+                    {
+                        response = true;
+                        gs.dialogSkip2 = 0.0f;
+                    }
+                    if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
+                    && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice7 && !ch.choice8 && !ch.choice9)
+                    {
+                        ch.choice4 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
+                    && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice7 && !ch.choice8 && !ch.choice9)
+                    {
+                        ch.choice5 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_3 && gs.mode == gameMode::playing
+                    && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice7 && !ch.choice8 && !ch.choice9)
+                    {
+                        ch.choice6 = true;
+                    }
+                    //********************/
+                    //level 9
+                    //********************/
+                    if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
+                        && gs.levelNum == 5 && !response)
+                    {
+                        response = true;
+                        gs.dialogSkip2 = 0.0f;
+                    }
+                    if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice4 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice5 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_3 && gs.mode == gameMode::playing
+                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    {
+                        ch.choice6 = true;
+                    }
+                    //end
 
                     break;
                 }
@@ -688,11 +755,7 @@ int main (int argc, char *argv[])
             if (gs.player().data.player.state == PlayerState::choice)
             {
                 movementKeys = false;
-            }
-            if(ch.choice1 || ch.choice2 || ch.choice3)
-            {
-                std::cout<<"working"<<'\n';
-            }
+            } 
 
             touchingNPC = false;
             touchingNPCId = -1;
@@ -940,7 +1003,7 @@ int main (int argc, char *argv[])
                     SDL_RenderDebugText(state.renderer, 155, 270, "Patient zero: Can you hear me?");
                     if (gs.lvl3IntroWait >= 2.0f)
                     {
-                        SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+                        SDL_RenderDebugText(state.renderer, 405, 325, "Yes(W) >>");
                     }
                 }
                 else
@@ -990,13 +1053,40 @@ int main (int argc, char *argv[])
                 movementKeys = false;
                 playerChoice(state, gs, deltaTime);
             }
-            if(gs.levelNum == 4)
+            switch(gs.levelNum)
             {
-                charSpeech(state, gs, deltaTime);
-            }
-            if(gs.levelNum == 5)
-            {
-                charSpeech(state, gs, deltaTime);
+                default:
+                {break;}
+                case 4:
+                {
+                    charSpeech(state, gs, deltaTime);
+                    break;
+                }
+                case 5:
+                {
+                    charSpeech(state, gs, deltaTime);
+                    break;
+                }
+                case 6:
+                {
+
+                }
+                case 7:
+                {
+                    charSpeech(state,gs,deltaTime);
+                }
+                case 8:
+                {
+                    
+                }
+                case 9:
+                {
+                    charSpeech(state, gs, deltaTime);
+                }
+                case 10:
+                {
+                    
+                }
             }
 
             if (gs.player().data.player.state == PlayerState::ended)
@@ -1386,7 +1476,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             }
         }
         //sprinting mechanic
-        if(state.keys[SDL_SCANCODE_LSHIFT] && gs.mode == gameMode::playing && movementKeys == true)
+        if(state.keys[SDL_SCANCODE_LSHIFT] || state.keys[SDL_SCANCODE_RSHIFT] && gs.mode == gameMode::playing && movementKeys == true)
         {
             gs.sprinting = true;
         }
@@ -1869,16 +1959,16 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level6[MAP_ROWS][MAP_COLS]=//room 
+        short level7ppl[MAP_ROWS][MAP_COLS]=//room 
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 33, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 32, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1892,39 +1982,16 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level7[MAP_ROWS][MAP_COLS]=//choosing change this to ppl
-    {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        7, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    };
-        short level8[MAP_ROWS][MAP_COLS]=//room
+        short level9ppl[MAP_ROWS][MAP_COLS]=//choosing change this to ppl
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 33, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 32, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1938,52 +2005,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
-        short level9[MAP_ROWS][MAP_COLS]=//choosing change this to ppl 
-    {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        7, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    };
-        short level10[MAP_ROWS][MAP_COLS]=//cutscene
-    {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 33, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 32, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    };
+
     
     const auto loadMap = [&state, &gs, &res](short layer[MAP_ROWS][MAP_COLS])
     {
@@ -2162,6 +2184,11 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                     gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
                     break;
                 }
+                
+
+                //level 5
+
+
                 case 19: // subject 4
                 {
                     GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
@@ -2204,10 +2231,105 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                     gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
                     break;
                 }
-                case 22:
+
+
+                //level 7
+
+
+                case 22://subject 7
                 {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 8;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
                     break;
                 }
+                case 23://subject 8
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 9;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 24://subject 9
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 10;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+
+
+                //level 9
+
+
+                case 25://subject 10
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 11;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 26://subject 11
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 12;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+                case 27://subject 12
+                {
+                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    NPC.data.NPC = NPCData();
+                    NPC.data.NPC.NPCId = 13;
+                    NPC.maxSpeedX = 50;
+                    NPC.collider = 
+                    {
+                        .x = 11, .y = 6,
+                        .w = 12, .h = 26,
+                    };
+                    gs.layers[LAYER_IDX_CHARACTER].push_back(NPC);
+                    break;
+                }
+
+
+                //break;;;;;;;;;;;;;;;;;
+
+
                 case 32: //switch level
                 {
                     //switch lvl
@@ -2291,7 +2413,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             }
             case 6://room
             {
-                loadMap(level6);
+                loadMap(level4);
                 loadMap(level4ppl);
                 break;
             }
@@ -2303,7 +2425,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             }
             case 8://room
             {
-                loadMap(level6);
+                loadMap(level4);
                 loadMap(level4ppl);
                 break;
             }
@@ -2315,7 +2437,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             }
             case 10://last
             {
-                loadMap(level6);
+                loadMap(level4);
                 loadMap(level4ppl);
                 break;
             }
@@ -2714,7 +2836,6 @@ bool introNPCsBesidePlayer(GameState &gs)
 }
 bool doneTalking(const GameState &gs)
 {
-    //fix error here and make it universal or just keep this whatever is easier
     if(gs.levelNum == 5)
     {
         return gs.patientsTalked[3] && gs.patientsTalked[4] && gs.patientsTalked [5];
@@ -2722,6 +2843,18 @@ bool doneTalking(const GameState &gs)
     else if(gs.levelNum == 3)
     {
         return gs.patientsTalked[0] && gs.patientsTalked[1] && gs.patientsTalked[2];
+    }
+    else if(gs.levelNum == 7)
+    {
+        return gs.patientsTalked[6] && gs.patientsTalked[7] && gs.patientsTalked[8];
+    }
+    else if(gs.levelNum == 9)
+    {
+        return gs.patientsTalked[9] && gs.patientsTalked[10] && gs.patientsTalked[11];
+    }
+    else
+    {
+        return false;
     }
 }
 void playerChoice(SDLState &state, GameState &gs, float deltaTime)
@@ -2733,6 +2866,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     SDL_RenderRect(state.renderer, &levelTwoTextBox);
     SDL_RenderDebugText(state.renderer, 155, 250, "???");
 
+    //level 3
     if (ch.choice1 || ch.choice2 || ch.choice3)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
@@ -2748,10 +2882,11 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
+    //level 5
     else if(ch.choice4)
     {
-        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
-        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        SDL_RenderDebugText(state.renderer, 155, 270, "Alright we trust in your decision. We'll");
+        SDL_RenderDebugText(state.renderer, 155, 290, "Deal with him accordingly");
         gs.choiceElapsed += deltaTime;
 
         if(gs.choiceElapsed >= 3.0f)
@@ -2765,6 +2900,37 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     }
     else if(ch.choice5)
     {
+        SDL_RenderDebugText(state.renderer, 155, 270, "If you say so, I'll give the order, we'll");
+        SDL_RenderDebugText(state.renderer, 155, 290, "call you back when we have the next batch.");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice6)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good choice, he was bad mouthing us the");
+        SDL_RenderDebugText(state.renderer, 155, 290, "whole way here, glad to get rid of him.");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    // level7
+        else if(ch.choice7)
+    {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
         SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
         gs.choiceElapsed += deltaTime;
@@ -2778,7 +2944,68 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice6)
+    else if(ch.choice8)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice9)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    //level 9
+        else if(ch.choice10)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice11)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
+        SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
+        gs.choiceElapsed += deltaTime;
+
+        if(gs.choiceElapsed >= 3.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            ch.choice1 = false;
+            ch.choice2 = false;
+            ch.choice3 = false;
+            gs.player().data.player.state = PlayerState::switchlvl;
+        }
+    }
+    else if(ch.choice12)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
         SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
@@ -2805,6 +3032,10 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
 {
     switch(gs.levelNum)
     {
+        default:
+        {
+            
+        }
         case 4:
         {
             gs.dialogSkip3 += deltaTime;
@@ -2819,7 +3050,8 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                 SDL_RenderRect(state.renderer, &levelTwoTextBox);
                 SDL_RenderDebugText(state.renderer, 155, 250, "???");
                 SDL_RenderDebugText(state.renderer, 155, 270, "Thanks for picking him out, we needed");
-                SDL_RenderDebugText(state.renderer, 155, 290, "someone who can find who has the virus");
+                SDL_RenderDebugText(state.renderer, 155, 290, "someone with your talent, and experience.");
+                SDL_RenderDebugText(state.renderer, 155, 310, "You are patient 0 afterall.");
             }
             else if (gs.dialogSkip3 > 5.0f && gs.dialogSkip3 < 11.0f)
                     {
@@ -2844,8 +3076,8 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_RenderRect(state.renderer, &levelTwoTextBox);
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
                         SDL_RenderDebugText(state.renderer, 155, 270, "Just go through the door, right in ");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. Don't be");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "scared, they're here for your safety.");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. If anything");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "goes wrong, we'll pull you out guranteed.");
                     }
                     else
                     {
@@ -2883,7 +3115,27 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
             }
             case 7:
             {
+            gs.dialogSkip4 += deltaTime;
+            movementKeys = false;
+                    if(gs.dialogSkip4 < 4.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Alright just like last time,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "choose the sick one.");
+                    }
+                    else 
+                    {
+                        movementKeys = true;
+                    }
+
                 break;
+
             }
             case 8:
             {
@@ -2891,6 +3143,25 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
             }
             case 9:
             {
+                gs.dialogSkip4 += deltaTime;
+                movementKeys = false;
+                    if(gs.dialogSkip4 < 4.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "Mendax");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Alright just like last time,");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "choose the sick one.");
+                    }
+                    else 
+                    {
+                        movementKeys = true;
+                    }
+
                 break;
             }
             case 10:
