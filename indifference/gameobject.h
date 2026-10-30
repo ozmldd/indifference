@@ -6,7 +6,7 @@
 
 enum class PlayerState
 {
-    idle, running, cutscene, walking, dialog, ended, switchlvl, choice,
+    idle, running, cutscene, walking, dialog, ended, switchlvl, choice, controls
 };
 
 enum class NPCState

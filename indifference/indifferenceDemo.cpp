@@ -481,7 +481,7 @@ int main (int argc, char *argv[])
                         if ((dialogLine == 1 && gs.dialogLimiter <= 3)
                             || (dialogLine == 2 && gs.dialogLimiter <= 6 && gs.dialogLimiter > 3))
                         {
-                            if (activeNPCId >= 2 && activeNPCId <= 12)
+                            if (activeNPCId >= 2 && activeNPCId <= 13)
                             {
                                 gs.patientsTalked[activeNPCId - 2] = true;
                             }
@@ -569,46 +569,46 @@ int main (int argc, char *argv[])
                     && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
                     && !ch.choice7 && !ch.choice8 && !ch.choice9)
                     {
-                        ch.choice4 = true;
+                        ch.choice7 = true;
                     }
                     else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
                     && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
                     && !ch.choice7 && !ch.choice8 && !ch.choice9)
                     {
-                        ch.choice5 = true;
+                        ch.choice8 = true;
                     }
                     else if(event.key.scancode == SDL_SCANCODE_3 && gs.mode == gameMode::playing
                     && gs.levelNum == 7 && gs.player().data.player.state == PlayerState::choice
                     && !ch.choice7 && !ch.choice8 && !ch.choice9)
                     {
-                        ch.choice6 = true;
+                        ch.choice9 = true;
                     }
                     //********************/
                     //level 9
                     //********************/
                     if (event.key.scancode == SDL_SCANCODE_W && gs.mode == gameMode::playing
-                        && gs.levelNum == 5 && !response)
+                        && gs.levelNum == 9 && !response)
                     {
                         response = true;
                         gs.dialogSkip2 = 0.0f;
                     }
                     if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
-                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
-                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    && gs.levelNum == 9 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice10 && !ch.choice11 && !ch.choice12)
                     {
-                        ch.choice4 = true;
+                        ch.choice10 = true;
                     }
                     else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
-                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
-                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    && gs.levelNum == 9 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice10 && !ch.choice11 && !ch.choice12)
                     {
-                        ch.choice5 = true;
+                        ch.choice11 = true;
                     }
                     else if(event.key.scancode == SDL_SCANCODE_3 && gs.mode == gameMode::playing
-                    && gs.levelNum == 5 && gs.player().data.player.state == PlayerState::choice
-                    && !ch.choice4 && !ch.choice5 && !ch.choice6)
+                    && gs.levelNum == 9 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice10 && !ch.choice11 && !ch.choice12)
                     {
-                        ch.choice6 = true;
+                        ch.choice12 = true;
                     }
                     //end
 
@@ -843,6 +843,28 @@ int main (int argc, char *argv[])
                 {
                     gs.lvl5Wait += deltaTime;
                     if(gs.lvl5Wait > 3.0f)
+                    {
+                        gs.player().data.player.state = PlayerState::choice;
+                    }
+                }
+            }
+            else if (gs.levelNum == 7 && !gs.lvlswitching)
+            {
+                if(doneTalking(gs))
+                {
+                    gs.lvl7Wait += deltaTime;
+                    if(gs.lvl7Wait > 3.0f)
+                    {
+                        gs.player().data.player.state = PlayerState::choice;
+                    }
+                }
+            }
+            else if (gs.levelNum == 9 && !gs.lvlswitching)
+            {
+                if(doneTalking(gs))
+                {
+                    gs.lvl9Wait += deltaTime;
+                    if(gs.lvl9Wait > 3.0f)
                     {
                         gs.player().data.player.state = PlayerState::choice;
                     }
@@ -1087,6 +1109,11 @@ int main (int argc, char *argv[])
                 {
                     
                 }
+            }
+
+            if (gs.player().data.player.state == PlayerState::dialog)
+            {
+                movementKeys = false;
             }
 
             if (gs.player().data.player.state == PlayerState::ended)
@@ -2420,7 +2447,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             case 7://choice
             {
                 loadMap(level3);
-                loadMap(level3ppl);
+                loadMap(level7ppl);
                 break;
             }
             case 8://room
@@ -2432,7 +2459,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             case 9://choice
             {
                 loadMap(level3);
-                loadMap(level3ppl);
+                loadMap(level9ppl);
                 break;
             }
             case 10://last
@@ -2467,7 +2494,7 @@ void clearMap(GameState &gs)
 
     gs.levelNum ++;
 
-    if (gs.levelNum > 6) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
+    if (gs.levelNum > 10) { gs.levelNum = 1;} //set it to the first level instead of crashing the game
 }
 
 void dialog(const SDLState &state, GameState &gs, const Resources &res)
@@ -2593,7 +2620,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
-        case 5: // patient 4 (on level 2)
+        case 5: // patient 4 (on level 5)
         {
             gs.dialogLimiter = 3;
             SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
@@ -2604,7 +2631,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
 
             break;
         }
-        case 6:
+        case 6://patient 5 (on level 5)
         {
             gs.dialogLimiter = 3;
             SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
@@ -2614,7 +2641,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
-        case 7:
+        case 7://patient 6 (on level 5)
         {
             gs.dialogLimiter = 2;
             SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
@@ -2623,8 +2650,54 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
-        case 8 :
+        case 8 ://patient 7 (on level 7)
         {
+            gs.dialogLimiter = 2;
+                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 9://patient 8 (on level 7)
+        {
+            gs.dialogLimiter = 2;
+            SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 10://patient 9 (on level 7)
+        {
+                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 11://patient 10 (on level 9)
+        {
+                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 12://patient 11(on level 9)
+        {
+                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            break;
+        }
+        case 13://patient 12 (on level 9)
+        {
+                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
+            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
     }
@@ -2892,9 +2965,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice4 = false;
+            ch.choice5 = false;
+            ch.choice6 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2907,9 +2980,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice4 = false;
+            ch.choice5 = false;
+            ch.choice6 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2922,9 +2995,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice4 = false;
+            ch.choice5 = false;
+            ch.choice6 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2938,9 +3011,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice7 = false;
+            ch.choice8 = false;
+            ch.choice9 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2953,9 +3026,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice7 = false;
+            ch.choice8 = false;
+            ch.choice9 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2968,9 +3041,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice7 = false;
+            ch.choice8 = false;
+            ch.choice9 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2984,9 +3057,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice10 = false;
+            ch.choice11 = false;
+            ch.choice12 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -2999,9 +3072,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice10 = false;
+            ch.choice11 = false;
+            ch.choice12 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
@@ -3014,9 +3087,9 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         if(gs.choiceElapsed >= 3.0f)
         {
             gs.choiceElapsed = 0.0f;
-            ch.choice1 = false;
-            ch.choice2 = false;
-            ch.choice3 = false;
+            ch.choice10 = false;
+            ch.choice11 = false;
+            ch.choice12 = false;
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
