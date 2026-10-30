@@ -352,6 +352,8 @@ struct choiceHolder
     bool choice10 = false;
     bool choice11 = false;
     bool choice12 = false;
+    bool choice13 = false;
+    bool choice14 = false;
 };
 
 choiceHolder ch;
@@ -615,6 +617,18 @@ int main (int argc, char *argv[])
                     {
                         ch.choice3 = true;
                     }
+                    if(event.key.scancode == SDL_SCANCODE_1 && gs.mode == gameMode::playing
+                    && gs.levelNum == 4 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice13 && !ch.choice14)
+                    {
+                        ch.choice13 = true;
+                    }
+                    else if(event.key.scancode == SDL_SCANCODE_2 && gs.mode == gameMode::playing
+                    && gs.levelNum == 4 && gs.player().data.player.state == PlayerState::choice
+                    && !ch.choice13 && !ch.choice14)
+                    {
+                        ch.choice14 = true;
+                    }
                     //********************/
                     //level 5
                     //********************/
@@ -845,6 +859,22 @@ int main (int argc, char *argv[])
                         }
                     }
                     }
+                    if (gs.mode == gameMode::playing && gs.levelNum == 4
+                        && gs.player().data.player.state == PlayerState::choice
+                        && !ch.choice13 && !ch.choice14)
+                    {
+                        const SDL_FRect yesChoice { 195, 308, 90, 32 };
+                        const SDL_FRect noChoice { 315, 308, 90, 32 };
+
+                        if (SDL_PointInRectFloat(&click, &yesChoice))
+                        {
+                            ch.choice13 = true;
+                        }
+                        else if (SDL_PointInRectFloat(&click, &noChoice))
+                        {
+                            ch.choice14 = true;
+                        }
+                    }
                 }                
                 break;
                 }
@@ -1052,6 +1082,7 @@ int main (int argc, char *argv[])
                 ch.choice3 = false;
                 ch.choice4 = false;
                 ch.choice5 = false;
+                ch.choice6 = false;
             }
             else if(gs.levelNum >= 9)
             {
@@ -1059,6 +1090,7 @@ int main (int argc, char *argv[])
                 ch.choice7 = false;
                 ch.choice8 = false;
             }
+
             
             if(gs.player().data.player.state == PlayerState::cutscene)
             {
@@ -1248,6 +1280,7 @@ int main (int argc, char *argv[])
                 }
                 case 10://special case
                 {
+                    charSpeech(state,gs,deltaTime);
                     break;
                 }
             }
@@ -1332,6 +1365,7 @@ int main (int argc, char *argv[])
             SDL_RenderDebugText(state.renderer, 175, 145, "Arrow keys - Move");
             SDL_RenderDebugText(state.renderer, 175, 175, "Z - Interact with characters");
             SDL_RenderDebugText(state.renderer, 175, 205, "W - Continue dialogue");
+            SDL_RenderDebugText(state.renderer, 175, 235, "Shift - Sprint");
 
             const SDL_FRect continueButton { 220, 280, 200, 50 };
             SDL_RenderTexture(state.renderer, res.textureButton, nullptr, &continueButton);
@@ -1961,9 +1995,9 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 10, 10, 10, 8, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 33, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 32, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 12, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2234,6 +2268,30 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
+    short level10[MAP_ROWS][MAP_COLS]=//room
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 8, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 33, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 7, 7, 7, 7, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    };
+    
 
     
     const auto loadMap = [&state, &gs, &res](short layer[MAP_ROWS][MAP_COLS])
@@ -2666,7 +2724,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
             }
             case 10://last
             {
-                loadMap(level4);
+                loadMap(level10);
                 loadMap(level4ppl);
                 break;
             }
@@ -2774,44 +2832,41 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         "Listen kid, you don't know what you're",
     },
     {
-        //9
+        //9 lvl5
         "I hate you lapdogs, just doing what you're"
-
     },
     {
-        //10
+        //10 lvl5
         "Virus? I ain't got no virus, I don't have"
     },
     {
-        "Where the hell am I? Who are you? Let me",
+        //11 lvl5 
+        "Where the hell am I? Who are you? Let me"
     },
     {
-        //11
-
+        //12 lvl7
+        "Let me see my kids, I miss them. I don't"
     },
     {
-        //12
-
+        //13 lvl7
+        "I just got the cold man *cough* don't kill"
     },
     {
-        //13
-        
+        //14 lvl 7
+        "Aye man, *cough* I don't got anything"
     },
     {
-        //14
-        
+        //15 lvl 9
+        gs.playerName,
+        "They kill them. Baby, there is no virus."
     },
     {
-        //15
-        
+        //16 lvl9
+        "Please I don't have anything don't kill me"
     },
     {
-        //16
-        
-    },
-    {
-        //17
-        
+        //17 lvl9
+        "Don't kill me or anyone, it isn't right!"
     },
 
     };
@@ -2826,7 +2881,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             if(gs.levelNum == 4)
             {
                 gs.dialogLimiter = 4;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 1");
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent A");
                 if(dialogLine > 0)
                 {
                     SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[0][dialogLine].c_str());
@@ -2841,7 +2896,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             else if (gs.levelNum == 6)
             {
                 gs.dialogLimiter = 3;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 1");
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent A");
 
                 SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[2][dialogLine].c_str());
                 SDL_RenderDebugText(state.renderer, 150, 290, "picked tried to attack us, sad way to go.");       
@@ -2850,7 +2905,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             else if(gs.levelNum == 8)
             {
                 gs.dialogLimiter = 4;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 1");
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent A");
                 if(dialogLine > 0)
                 {
                     SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[4][dialogLine].c_str());
@@ -2870,7 +2925,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             if(gs.levelNum == 4)
             {
                 gs.dialogLimiter = 4;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 2");
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent B");
                 if(dialogLine > 0)
                 {
                     SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[1][dialogLine].c_str());
@@ -2885,8 +2940,8 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
 
             else if (gs.levelNum == 6)
             {
-                gs.dialogLimiter = 4;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 1");
+                gs.dialogLimiter = 3;
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent B");
                 SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[3][dialogLine].c_str());
                 SDL_RenderDebugText(state.renderer, 150, 290, "don't think much on it, everyone dies.");
                 SDL_RenderDebugText(state.renderer, 410, 325, "Ok (W) >>");      
@@ -2894,10 +2949,12 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             else if(gs.levelNum == 8)
             {
                 gs.dialogLimiter = 4;
-                SDL_RenderDebugText(state.renderer, 150, 250, "Agent 1");
+                SDL_RenderDebugText(state.renderer, 150, 250, "Agent B");
                 if(dialogLine > 0)
                 {
                     SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[5][dialogLine].c_str());
+                    SDL_RenderDebugText(state.renderer, 150, 290, "He's the one bossing you around and");
+                    SDL_RenderDebugText(state.renderer, 150, 310, "giving you info on the symptoms");
                     SDL_RenderDebugText(state.renderer, 410, 325, "Ok (W) >>");
                 }
                 else
@@ -2912,7 +2969,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 2: // patient 1
         {
             gs.dialogLimiter = 2;
-            SDL_RenderDebugText(state.renderer, 450, 250, "Job");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Job");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[6][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "me. You have to believe me!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
@@ -2921,7 +2978,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 3: // patient 2
         {
             gs.dialogLimiter = 1;
-            SDL_RenderDebugText(state.renderer, 450, 250, "Will");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Will");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[7][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
@@ -2929,7 +2986,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 4: // patient 3
         {
             gs.dialogLimiter = 3;
-            SDL_RenderDebugText(state.renderer, 430, 250, "Veritas");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Veritas");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[8][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "doing, these people are crazy. There is");
             SDL_RenderDebugText(state.renderer, 150, 310, "no virus but choose me if you have to.");
@@ -2939,7 +2996,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 5: // patient 4 (on level 5)
         {
             gs.dialogLimiter = 3;
-            SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Mark");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[9][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "told. I don't have anything, this mark");
             SDL_RenderDebugText(state.renderer, 150, 310, "just a birthmark, so let me go!");
@@ -2950,7 +3007,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 6://patient 5 (on level 5)
         {
             gs.dialogLimiter = 3;
-            SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Cam");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[10][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "a rash or anything like those sickos.");
             SDL_RenderDebugText(state.renderer, 150, 310, "And what's up with the mark on your face?");
@@ -2960,7 +3017,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 7://patient 6 (on level 5)
         {
             gs.dialogLimiter = 2;
-            SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Iram");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[11][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
@@ -2969,50 +3026,63 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
         case 8 ://patient 7 (on level 7)
         {
             gs.dialogLimiter = 2;
-                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Mary");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[12][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 150, 290, "care what you do to me, let me see them!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
         case 9://patient 8 (on level 7)
         {
             gs.dialogLimiter = 2;
-            SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Jake");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[13][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 150, 290, "me man, i can't control it!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
         case 10://patient 9 (on level 7)
         {
-                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            SDL_RenderDebugText(state.renderer, 155, 250, "Lilian");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[14][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 150, 290, "you know I can't do anything about it!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
         case 11://patient 10 (on level 9)
         {
-                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
-            SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[15][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
-            SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
+            gs.dialogLimiter = 4;
+            SDL_RenderDebugText(state.renderer, 155, 250, "MA");
+            if(dialogLine > 0)
+            {
+                SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[15][dialogLine].c_str());
+                SDL_RenderDebugText(state.renderer, 150, 290, "you judge these people off of nothing!");
+                SDL_RenderDebugText(state.renderer, 405, 325, "Next (W) >>");
+            }
+            else
+            {
+                SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[15][dialogLine].c_str());
+                SDL_RenderDebugText(state.renderer, 150, 290, "Do you know what happens to the people");
+                SDL_RenderDebugText(state.renderer, 150, 310, "you choose?");
+                SDL_RenderDebugText(state.renderer, 405, 325, "Next (W) >>");
+            }
             break;
         }
         case 12://patient 11(on level 9)
         {
-                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            gs.dialogLimiter = 3;
+            SDL_RenderDebugText(state.renderer, 155, 250, "Hope");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[16][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 150, 290, "I just want to live!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
         case 13://patient 12 (on level 9)
         {
-                        SDL_RenderDebugText(state.renderer, 450, 250, "NULL");
+            gs.dialogLimiter = 3;
+            SDL_RenderDebugText(state.renderer, 155, 250, "Simone");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[17][dialogLine].c_str());
-            SDL_RenderDebugText(state.renderer, 150, 290, "out yo, I wanna go back home you pig!");
+            SDL_RenderDebugText(state.renderer, 150, 290, "Who are you to judge if I live!");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
@@ -3250,8 +3320,25 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     SDL_RenderRect(state.renderer, &levelTwoTextBox);
     SDL_RenderDebugText(state.renderer, 155, 250, "???");
 
+    if (gs.levelNum == 4 && ch.choice13)
+    {
+        ch.choice13 = false;
+        gs.dialogSkip3 = 15.0f;
+        gs.player().data.player.state = PlayerState::idle;
+    }
+    else if (gs.levelNum == 4 && ch.choice14)
+    {
+        SDL_RenderDebugText(state.renderer, 155, 270, "Then you are free to leave.");
+        gs.choiceElapsed += deltaTime;
+
+        if (gs.choiceElapsed >= 2.0f)
+        {
+            gs.choiceElapsed = 0.0f;
+            gs.restartRequested = true;
+        }
+    }
     //level 3
-    if (ch.choice1 || ch.choice2 || ch.choice3)
+    else if (gs.levelNum == 3 && (ch.choice1 || ch.choice2 || ch.choice3))
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good job, you chose right. We're going to");
         SDL_RenderDebugText(state.renderer, 155, 290, "need your talents");
@@ -3267,7 +3354,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         }
     }
     //level 5
-    else if(ch.choice4)
+    else if(gs.levelNum == 5 && ch.choice4)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Alright we trust in your decision. We'll");
         SDL_RenderDebugText(state.renderer, 155, 290, "Deal with him accordingly");
@@ -3282,7 +3369,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice5)
+    else if(gs.levelNum == 5 && ch.choice5)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "If you say so, I'll give the order, we'll");
         SDL_RenderDebugText(state.renderer, 155, 290, "call you back when we have the next batch.");
@@ -3297,7 +3384,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice6)
+    else if(gs.levelNum == 5 && ch.choice6)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good choice, he was bad mouthing us the");
         SDL_RenderDebugText(state.renderer, 155, 290, "whole way here, glad to get rid of him.");
@@ -3313,7 +3400,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         }
     }
     // level7
-        else if(ch.choice7)
+        else if(gs.levelNum == 7 && ch.choice7)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "We trust in your decision. Our Agents will");
         SDL_RenderDebugText(state.renderer, 155, 290, "deal with them. ");
@@ -3328,7 +3415,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice8)
+    else if(gs.levelNum == 7 && ch.choice8)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Good decision, we'll send him back with");
         SDL_RenderDebugText(state.renderer, 155, 290, "our experts and call his family.");
@@ -3343,7 +3430,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice9)
+    else if(gs.levelNum == 7 && ch.choice9)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "Great choice, our specialists will deal");
         SDL_RenderDebugText(state.renderer, 155, 290, "with him, he'll be killed.");
@@ -3359,7 +3446,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
         }
     }
     //level 9
-        else if(ch.choice10)
+        else if(gs.levelNum == 9 && ch.choice10)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "I know it was a tough decision but good");
         SDL_RenderDebugText(state.renderer, 155, 290, "choice. She will be killed for our safety,");
@@ -3375,7 +3462,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice11)
+    else if(gs.levelNum == 9 && ch.choice11)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "You did well, too bad he has to be killed.");
         SDL_RenderDebugText(state.renderer, 155, 290, "Remember you're doing this for the good of");
@@ -3391,7 +3478,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
             gs.player().data.player.state = PlayerState::switchlvl;
         }
     }
-    else if(ch.choice12)
+    else if(gs.levelNum == 9 && ch.choice12)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "We hope you are right, mark on his face is");
         SDL_RenderDebugText(state.renderer, 155, 290, "just like yours.");
@@ -3408,10 +3495,19 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     }
     else
     {
-        SDL_RenderDebugText(state.renderer, 155, 270, "So who do you think it is? Choose.");
-        SDL_RenderDebugText(state.renderer, 150, 320, "(1)");
-        SDL_RenderDebugText(state.renderer, 270, 320, "(2)");
-        SDL_RenderDebugText(state.renderer, 390, 320, "(3)");
+        if (gs.levelNum == 4)
+        {
+            SDL_RenderDebugText(state.renderer, 155, 270, "Do you want to work with us?");
+            SDL_RenderDebugText(state.renderer, 205, 320, "(1) Yes");
+            SDL_RenderDebugText(state.renderer, 325, 320, "(2) No");
+        }
+        else
+        {
+            SDL_RenderDebugText(state.renderer, 155, 270, "So who do you think it is? Choose.");
+            SDL_RenderDebugText(state.renderer, 150, 320, "(1)");
+            SDL_RenderDebugText(state.renderer, 270, 320, "(2)");
+            SDL_RenderDebugText(state.renderer, 390, 320, "(3)");
+        }
     }
 }
 void charSpeech(SDLState &state, GameState &gs, float deltaTime)
@@ -3424,8 +3520,13 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
         }
         case 4:
         {
-            gs.dialogSkip3 += deltaTime;
             movementKeys = false;
+            if (gs.player().data.player.state == PlayerState::choice)
+            {
+                break;
+            }
+
+            gs.dialogSkip3 += deltaTime;
             if(gs.dialogSkip3 < 5.0f)
             {
                 SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
@@ -3439,7 +3540,7 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                 SDL_RenderDebugText(state.renderer, 155, 290, "someone with your talent, and experience.");
                 SDL_RenderDebugText(state.renderer, 155, 310, "You are patient 0 afterall.");
             }
-            else if (gs.dialogSkip3 > 5.0f && gs.dialogSkip3 < 11.0f)
+            else if (gs.dialogSkip3 < 11.0f)
                     {
                         SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
                         SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
@@ -3448,27 +3549,31 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
                         SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
                         SDL_RenderRect(state.renderer, &levelTwoTextBox);
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Oh and we'll need you for a little more.");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "We need you to pick out some more people");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "with the disease we trust in your decision");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "So do you want to work with us? We'll");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "gurantee your freedom and treat you. We");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "have the best healthcare afterall.");
                     }
-            else if (gs.dialogSkip3 > 11.0f && gs.dialogSkip3 < 15.0f)
+            else if (gs.dialogSkip3 < 15.0f)
                     {
-                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
-                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
-                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+                        gs.player().data.player.state = PlayerState::choice;
+                    }
+            else if (gs.dialogSkip3 < 19.0f)
+            {
+                SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
 
-                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
-                        SDL_RenderDebugText(state.renderer, 155, 250, "???");
-                        SDL_RenderDebugText(state.renderer, 155, 270, "Just go through the door, right in ");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. If anything");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "goes wrong, we'll pull you out guranteed.");
-                    }
-                    else
-                    {
-                        movementKeys = true;
-                    }
+                SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                SDL_RenderDebugText(state.renderer, 155, 250, "???");
+                SDL_RenderDebugText(state.renderer, 155, 270, "good, just go through the door, right in ");
+                SDL_RenderDebugText(state.renderer, 155, 290, "between Agent A and Agent B. If anything");
+                SDL_RenderDebugText(state.renderer, 155, 310, "goes wrong, we'll pull you out guranteed.");
+            }
+            else
+            {
+                movementKeys = true;
+            }
             break;
         }
         case 5://edit this one later
@@ -3652,6 +3757,61 @@ void charSpeech(SDLState &state, GameState &gs, float deltaTime)
             }
             case 10:
             {
+                gs.dialogSkip9 += deltaTime;
+                movementKeys = false;
+                    if(gs.dialogSkip9 < 2.0f)
+                    {
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, gs.playerName.c_str());
+                        SDL_RenderDebugText(state.renderer, 155, 270, "What have you done.");
+                    }
+                    else if(gs.dialogSkip9 > 2.0f && gs.dialogSkip9 < 4.0f)
+                    {
+
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, gs.playerName.c_str());
+                        SDL_RenderDebugText(state.renderer, 155, 270, "They weren't even sick.");
+                    }
+                    else if(gs.dialogSkip9 > 4.0f && gs.dialogSkip9 < 6.0f)
+                    {
+
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, gs.playerName.c_str());
+                        SDL_RenderDebugText(state.renderer, 155, 270, "That guy was right, who was I to judge if");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "someone can live or die.");
+                    }
+                    else if(gs.dialogSkip9 > 6.0f && gs.dialogSkip9 < 8.0f)
+                    {
+
+                        SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 220);
+                        SDL_FRect levelTwoTextBox { 143, 240, 350, 100 };
+                        SDL_RenderFillRect(state.renderer, &levelTwoTextBox);
+
+                        SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
+                        SDL_RenderRect(state.renderer, &levelTwoTextBox);
+                        SDL_RenderDebugText(state.renderer, 155, 250, "Mendax");
+                        SDL_RenderDebugText(state.renderer, 155, 270, "Government stopped funding the project so");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "you're free to go. You did well kid.");
+                    }
+                    else 
+                    {
+                        movementKeys = true;
+                    }
                 break;
             }
         }
