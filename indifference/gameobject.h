@@ -6,7 +6,7 @@
 
 enum class PlayerState
 {
-    idle, running, cutscene, walking, dialog, ended, switchlvl, choice, controls
+    idle, running, cutscene, walking, dialog, ended, switchlvl, choice
 };
 
 enum class NPCState
@@ -20,7 +20,7 @@ enum class creditState
 
 enum class gameMode
 {
-    warning, title, optionMenu, playing, paused, credits, flash
+    warning, title, optionMenu, playing, paused, credits, flash, controls, nameEntry
 };
 
 struct playerData
