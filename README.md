@@ -127,4 +127,7 @@ Here are code that was 100& AI:
 -control screen
 -the zoom in for the player
 -slider and buttons
+-player and Agents walking animation implentation
+-some smaller things like adding new textures
+
 The rest was from me and an old game I built using a youtube tutorial (Shout out Constref)
