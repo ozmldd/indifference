@@ -5,10 +5,6 @@ A 2D game written from scratch in C++ with SDL3.
 > A game me and my friend built just for fun and to challenge myself with my new coding
 > skills in c++. Simple story game on various different lessons
 
-![Title screen](docs/title.png)
-
----
-
 ## Features
 
 - Hand-rolled game loop with delta-time movement — no engine, no framework
@@ -32,14 +28,11 @@ A 2D game written from scratch in C++ with SDL3.
 
 ## Controls
 
-| Input | Action |
-|---|---|
-| `A` / `D` or `←` / `→` | Move |
-| `Space` (hold) | Jump — keep it held to bunny hop |
-| Mouse | Menus, buttons, volume slider |
-
-> Fill in the rest from your `handleKeyInput` — the debug toggle, the dialogue advance
-> key, and the pause key. Anyone cloning this won't be able to guess them.
+arrows keys to move (left for left, right for right, you get the deal)
+hold either shift keys to sprint
+Z for interacting with characters
+W for skipping dialog
+S for skipping some of the credits at the end
 
 ---
 
@@ -70,13 +63,12 @@ turn into an afternoon of debugging.
 
 The built executable needs the SDL3 DLLs beside it, plus the `assets/` folder.
 
----
-
 ## Project structure
 
 ```
 .
-├── gametest.cpp        main loop, update, render, collision, menus
+├── indifference.cpp        main loop, update, render, collision, menus
+├── indifference.exe        basic executable
 ├── gameobject.h        GameObject, ObjectType, the ObjectData union, Button, Slider
 ├── animation.h         Animation — wraps a timer, reports the current frame
 ├── timer.h             timer — length, elapsed, timeout
@@ -100,8 +92,6 @@ cleanly at any window size. Mouse input is converted with
 `SDL_ConvertEventToRenderCoordinates` before hit-testing, otherwise buttons stop
 lining up the moment the window is resized.
 
----
-
 ## Level format
 
 Levels are 2D integer arrays, read tile by tile in `createTiles`:
@@ -122,8 +112,6 @@ To add a level, add a `case` to the `createTiles` switch and point it at the new
 array. Every value needs its own case — a missing one falls through to `default` and
 silently loads level 1 instead.
 
----
-
 ## Save data
 
 Saves are written to the platform preferences directory via `SDL_GetPrefPath`, not
@@ -134,36 +122,24 @@ Reading it back uses `std::stoi` / `std::stof`, which throw on an empty line —
 the read is wrapped in a `try` / `catch` and the save is loaded once at startup
 rather than on every call to `createTiles`.
 
----
-
 ## Assets and licensing
 
-**This matters if you distribute the game.** The art and audio come from several
-sources under different terms:
+Shoutout to my friend Diego (@itsmista_dlg) for some of the drawing like the main character
+Another shoutout to Ceebee(ceebee_do_thingies) made some incredible art for the cutscene seriously follow
+him he came in clutch.
+Rest of the tiles and NPC's were drawn (lazily) by me
 
-| Source | Terms |
-|---|---|
-| CraftPix freebies | Attribution required. **Raw art files may not be redistributed** — do not commit `assets/` to a public repo |
-| Various sound effects | CC-BY 3.0 and CC-BY-SA 3.0 — attribution required |
-| Forest parallax pack | Public domain |
-
-Two rules follow from that:
-
-1. **`CREDITS.txt` must ship with the game**, filled in with the real entries. A
-   missing or empty credits file breaks the CC-BY terms.
-2. **CC-BY-SA assets stay in their own files.** Merging them into a combined
-   spritesheet with differently-licensed art would force the share-alike terms onto
-   everything in that file.
-
-Anything original — the code, the tile art, the character sprites, the menu
-screens — is yours.
-
----
-
-## Known issues / TODO
-
-- `CREDITS.txt` is still empty and needs real attribution entries before any build
-  goes out
-- The screen-flash effect is wired up but `gs.flash` is never set to `true`, so it
-  never fires — hook it to the end of the intro
-- Top-down sprite set exists for up and down; left and right still need cutting
+##AI USAGE (very important)
+my code was AI assisted some times just for ideas on structure, other times on the actual code.
+Here are code that was 100& AI:
+-The epilepsy warning 
+-In-game Menu function
+-Credit function
+-some of the dialog system (mostly the framing of the function with the use of arrays)
+-switch level transition
+-intro cutscene transition
+-all of the Name entry
+-control screen
+-the zoom in for the player
+-slider and buttons
+The rest was from me and an old game I built using a youtube tutorial (Shout out Constref)
