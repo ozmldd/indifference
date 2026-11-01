@@ -10,10 +10,7 @@ A 2D game written from scratch in C++ with SDL3.
 - Hand-rolled game loop with delta-time movement — no engine, no framework
 - Two-pass axis-separated collision (resolve X, then resolve Y) with a float epsilon
   so grazing contacts don't register as hits
-- Held-button jumping, so bunny hopping chains naturally and air control stays responsive
-- Enemies that track the player, with a death screen and a full level reset
-- Parallax scrolling background that wraps seamlessly in both directions
-- Camera that follows the player and clamps to the level bounds
+- intro cut scene
 - Tile-based levels loaded from an integer map, switchable at runtime
 - NPC dialogue with per-character lines, word wrap, and line advancing
 - Title screen, options menu with a draggable volume slider, and a pause menu that
