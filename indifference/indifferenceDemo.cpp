@@ -54,6 +54,7 @@ int activeNPCId = -1;
 const float SKIP_DELAY = 5.0f;
 bool title = true;
 const float FLASH_DURATION = 0.15f;
+constexpr float LEVEL_TRANSITION_FADE_DURATION = 0.25f;
 bool gameFin = false;
 bool response = false;
 std::string credits [6]
@@ -101,6 +102,8 @@ struct GameState
     float Lvltransition = 0.0f;
     bool lvlswitching = false;
     bool lvlMapSwitched = false;
+    bool introCutsceneFlashing = false;
+    float introCutsceneFlashElapsed = 0.0f;
     float introCS = 0.0f;
     float introCutsceneElapsed = 0.0f;
     bool restartRequested = false;
@@ -153,9 +156,13 @@ struct Resources
     const int ANIM_AGENT_WALK = 0;
 
     std::vector<SDL_Texture *> textures;
-    SDL_Texture *textureIdle, *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureWoodFloor, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
+    SDL_Texture *texturePlayerIdleNorth, *texturePlayerIdleSouth, *texturePlayerIdleEast, *texturePlayerIdleWest;
+    SDL_Texture *texturePlayerRunNorth, *texturePlayerRunSouth;
+    SDL_Texture *textureButtonBack, *textureButtonNext, *textureButtonOptions, *textureButtonSave, *textureButtonStart;
+    SDL_Texture *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureWoodFloor, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
     , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition, *textureStoneFloor, *textureWindowWatch, *textureCoolerWindow, *textureStoneWallA, *textureStoneWallC, *texturedoor
-    ,*textureBed, *texturewallMirror, *textureIntroCutscene;
+    ,*textureBed, *texturewallMirror, *textureIntroCutscene, *textureFlash, *textureNPC1, *textureNPC2, *textureNPC3, *textureNPC4,*textureNPC5,
+    *textureNPC6, *textureNPC7, *textureNPC8, *textureNPC9, *textureNPC10, *textureNPC11, *textureNPC12;
     
     //music stuffff
     std::vector<MIX_Audio *> audioClips;
@@ -202,7 +209,17 @@ struct Resources
         AgentAnims.resize(3);
         AgentAnims[ANIM_AGENT_WALK]= Animation(1, 1.0f);
 
-        textureIdle = loadTexture(state.renderer, "assets/texture/idle.png");
+        texturePlayerIdleNorth = loadTexture(state.renderer, "assets/texture/idleN.png");
+        texturePlayerIdleSouth = loadTexture(state.renderer, "assets/texture/idleS.png");
+        texturePlayerIdleEast = loadTexture(state.renderer, "assets/texture/idleE.png");
+        texturePlayerIdleWest = loadTexture(state.renderer, "assets/texture/idleW.png");
+        texturePlayerRunNorth = loadTexture(state.renderer, "assets/texture/runningN.png");
+        texturePlayerRunSouth = loadTexture(state.renderer, "assets/texture/runningS.png");
+        textureButtonBack = loadTexture(state.renderer, "assets/texture/btn_back.png");
+        textureButtonNext = loadTexture(state.renderer, "assets/texture/btn_next.png");
+        textureButtonOptions = loadTexture(state.renderer, "assets/texture/btn_options.png");
+        textureButtonSave = loadTexture(state.renderer, "assets/texture/btn_save.png");
+        textureButtonStart = loadTexture(state.renderer, "assets/texture/btn_start.png");
         textureRun = loadTexture(state.renderer, "assets/texture/walking.png");
         textureAgentIdle = loadTexture(state.renderer, "assets/texture/NPC.png");
         textureWood = loadTexture(state.renderer, "assets/texture/wood.png");
@@ -230,7 +247,19 @@ struct Resources
         textureBed = loadTexture(state.renderer, "assets/texture/bed.png");
         texturewallMirror = loadTexture(state.renderer, "assets/texture/wallMirror.png");
         textureIntroCutscene = loadTexture(state.renderer, "assets/texture/introCutscene.jpg");
-        
+        textureFlash = loadTexture(state.renderer, "assets/texture/flash.png");
+        textureNPC1 = loadTexture(state.renderer, "assets/texture/NPC1.png");
+        textureNPC2 = loadTexture(state.renderer, "assets/texture/NPC2.png");
+        textureNPC3 = loadTexture(state.renderer, "assets/texture/NPC3.png");
+        textureNPC4 = loadTexture(state.renderer, "assets/texture/NPC4.png");
+        textureNPC5 = loadTexture(state.renderer, "assets/texture/NPC5.png");
+        textureNPC6 = loadTexture(state.renderer, "assets/texture/NPC6.png");
+        textureNPC7 = loadTexture(state.renderer, "assets/texture/NPC7.png");
+        textureNPC8 = loadTexture(state.renderer, "assets/texture/NPC8.png");
+        textureNPC9 = loadTexture(state.renderer, "assets/texture/NPC9.png");
+        textureNPC10 = loadTexture(state.renderer, "assets/texture/NPC10.png");
+        textureNPC11 = loadTexture(state.renderer, "assets/texture/NPC11.png");        
+        textureNPC12 = loadTexture(state.renderer, "assets/texture/NPC12.png");
         //this is to link music to the slider 
         //MIX_SetTrackGain(res.trackMusic, slider.value);
         //this is for music later
@@ -263,20 +292,20 @@ struct holder
     Button startButton;
     startButton.rect = SDL_FRect
     {
-        .x = 240, .y = 150,
-        .w = 200, .h = 60,
+        .x = 290, .y = 150,
+        .w = 100, .h = 60,
     };
-    startButton.texture = res.textureButton;
+    startButton.texture = res.textureButtonStart;
     startButton.ButtonId = 0;
     gs.menuButtons.push_back(startButton);
 
     Button menuButtonn;
     menuButtonn.rect = SDL_FRect
     {
-        .x = 240, .y = 250,
-        .w = 200, .h = 60
+        .x = 290, .y = 250,
+        .w = 100, .h = 60
     };
-    menuButtonn.texture = res.textureButton;
+    menuButtonn.texture = res.textureButtonOptions;
     menuButtonn.ButtonId = 1;
     gs.menuButtons.push_back(menuButtonn);
 
@@ -287,7 +316,7 @@ struct holder
         .x = 0, .y = 60,
         .w = 100, .h = 60
     };
-    optionButton.texture = res.textureButton;
+    optionButton.texture = res.textureButtonBack;
     optionButton.ButtonId = 10;
     gs.menuButtons.push_back(optionButton);
 
@@ -306,30 +335,30 @@ struct holder
     ButtonGame menuBack;
     menuBack.rectt = SDL_FRect
     {
-        .x = 210, .y = 100,
-        .w = 200, .h = 40,
+        .x = 260, .y = 100,
+        .w = 100, .h = 60,
     };
-    menuBack.texture = res.textureButton;
+    menuBack.texture = res.textureButtonNext;
     menuBack.ButtonId = 21;
     gs.gameButtons.push_back(menuBack);
 
     ButtonGame BTM; //back to menu
     BTM.rectt = SDL_FRect
     {
-        .x = 210, .y = 160,
-        .w = 200, .h = 40,
+        .x = 260, .y = 160,
+        .w = 100, .h = 60,
     };
-    BTM.texture = res.textureButton;
+    BTM.texture = res.textureButtonBack;
     BTM.ButtonId = 22;
     gs.gameButtons.push_back(BTM);
 
     ButtonGame saveBtn; // save the game
     saveBtn.rectt = SDL_FRect
     {
-        .x = 210, .y = 220,
-        .w = 200, .h = 40,
+        .x = 260, .y = 220,
+        .w = 100, .h = 60,
     };
-    saveBtn.texture = res.textureButton;
+    saveBtn.texture = res.textureButtonSave;
     saveBtn.ButtonId = 23;
     gs.gameButtons.push_back(saveBtn);
 
@@ -815,7 +844,7 @@ int main (int argc, char *argv[])
                     }
                     else if (gs.mode == gameMode::controls)
                     {
-                        const SDL_FRect continueButton { 220, 280, 200, 50 };
+                        const SDL_FRect continueButton { 270, 275, 100, 60 };
                         if (SDL_PointInRectFloat(&click, &continueButton))
                         {
                             gs.mode = gameMode::nameEntry;
@@ -824,7 +853,7 @@ int main (int argc, char *argv[])
                     }
                     else if (gs.mode == gameMode::nameEntry)
                     {
-                        const SDL_FRect startButton { 220, 280, 200, 50 };
+                        const SDL_FRect startButton { 270, 275, 100, 60 };
                         if (SDL_PointInRectFloat(&click, &startButton)
                             && !gs.playerName.empty())
                         {
@@ -937,16 +966,15 @@ int main (int argc, char *argv[])
             if(gs.lvlswitching)
             {
                 gs.Lvltransition += deltaTime;
-                constexpr float fadeDuration = 0.25f;
 
-                if(!gs.lvlMapSwitched && gs.Lvltransition >= fadeDuration)
+                if(!gs.lvlMapSwitched && gs.Lvltransition >= LEVEL_TRANSITION_FADE_DURATION)
                 {
                     clearMap(gs);
                     createTiles(state, gs, res);
                     gs.lvlMapSwitched = true;
                 }
 
-                if(gs.Lvltransition >= fadeDuration * 2.0f)
+                if(gs.Lvltransition >= LEVEL_TRANSITION_FADE_DURATION * 2.0f)
                 {
                     gs.lvlswitching = false;
                     gs.Lvltransition = 0.0f;
@@ -956,6 +984,16 @@ int main (int argc, char *argv[])
                         gs.player().data.player.state = PlayerState::idle;
                     }
                     movementKeys = true;
+                }
+            }
+
+            if(gs.introCutsceneFlashing)
+            {
+                gs.introCutsceneFlashElapsed += deltaTime;
+                if(gs.introCutsceneFlashElapsed >= LEVEL_TRANSITION_FADE_DURATION * 2.0f)
+                {
+                    gs.introCutsceneFlashing = false;
+                    gs.introCutsceneFlashElapsed = 0.0f;
                 }
             }
 
@@ -1081,11 +1119,14 @@ int main (int argc, char *argv[])
             //flashesesees 
             if(gs.timeFlashed > 0)
             {
-                SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
-                SDL_RenderFillRect(state.renderer, NULL);
-                SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, 255);
-                SDL_RenderDebugText(state.renderer, 350, 350, "STOPPPPPPPPPP");
-
+                const SDL_FRect flashRect
+                {
+                    .x = 0,
+                    .y = 0,
+                    .w = static_cast<float>(state.logW),
+                    .h = static_cast<float>(state.logH)
+                };
+                SDL_RenderTexture(state.renderer, res.textureFlash, nullptr, &flashRect);
             }
 
             if(gs.levelNum >= 7 && gs.levelNum < 9)
@@ -1231,8 +1272,8 @@ int main (int argc, char *argv[])
                         SDL_RenderRect(state.renderer, &textBox);
                         SDL_RenderDebugText(state.renderer, 155, 250, "???");
                         SDL_RenderDebugText(state.renderer, 155, 270, "Do you see those people over there?");
-                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one with your same illness");
-                        SDL_RenderDebugText(state.renderer, 155, 310, "they should have a red mark like you.");
+                        SDL_RenderDebugText(state.renderer, 155, 290, "Find out the one who's been infected,");
+                        SDL_RenderDebugText(state.renderer, 155, 310, "they should have a red mark on their face.");
                     }
                     else if (gs.dialogSkip2 < 10.0f)
                     {
@@ -1352,7 +1393,7 @@ int main (int argc, char *argv[])
             Button btn;
             
             SDL_RenderTexture(state.renderer, res.textureBg2, nullptr, nullptr);
-            SDL_RenderTexture(state.renderer, res.textureButton, nullptr, &btn.rect);
+            SDL_RenderTexture(state.renderer, res.textureButtonBack, nullptr, &btn.rect);
 
             for(Slider &s : gs.slider)
             {
@@ -1407,9 +1448,8 @@ int main (int argc, char *argv[])
             SDL_RenderDebugText(state.renderer, 175, 205, "W - Continue dialogue");
             SDL_RenderDebugText(state.renderer, 175, 235, "Shift - Sprint");
 
-            const SDL_FRect continueButton { 220, 280, 200, 50 };
-            SDL_RenderTexture(state.renderer, res.textureButton, nullptr, &continueButton);
-            SDL_RenderDebugText(state.renderer, 282, 300, "Continue");
+            const SDL_FRect continueButton { 270, 275, 100, 60 };
+            SDL_RenderTexture(state.renderer, res.textureButtonNext, nullptr, &continueButton);
         }
         else if (gs.mode == gameMode::nameEntry)
         {
@@ -1435,9 +1475,8 @@ int main (int argc, char *argv[])
             SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
             SDL_RenderDebugText(state.renderer, 175, 190, gs.playerName.c_str());
 
-            const SDL_FRect startButton { 220, 280, 200, 50 };
-            SDL_RenderTexture(state.renderer, res.textureButton, nullptr, &startButton);
-            SDL_RenderDebugText(state.renderer, 282, 300, "Start");
+            const SDL_FRect startButton { 270, 275, 100, 60 };
+            SDL_RenderTexture(state.renderer, res.textureButtonStart, nullptr, &startButton);
         }
         //game paused
         else if (gs.mode == gameMode::paused)
@@ -1518,10 +1557,21 @@ int main (int argc, char *argv[])
 
         if(gs.lvlswitching)
         {
-            constexpr float fadeDuration = 0.25f;
-            const float fadeProgress = gs.Lvltransition < fadeDuration
-                ? gs.Lvltransition / fadeDuration
-                : 1.0f - ((gs.Lvltransition - fadeDuration) / fadeDuration);
+            const float fadeProgress = gs.Lvltransition < LEVEL_TRANSITION_FADE_DURATION
+                ? gs.Lvltransition / LEVEL_TRANSITION_FADE_DURATION
+                : 1.0f - ((gs.Lvltransition - LEVEL_TRANSITION_FADE_DURATION) / LEVEL_TRANSITION_FADE_DURATION);
+            const Uint8 alpha = static_cast<Uint8>(SDL_clamp(fadeProgress, 0.0f, 1.0f) * 255.0f);
+
+            SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(state.renderer, 0, 0, 0, alpha);
+            SDL_RenderFillRect(state.renderer, nullptr);
+            SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_NONE);
+        }
+        else if(gs.introCutsceneFlashing)
+        {
+            const float fadeProgress = gs.introCutsceneFlashElapsed < LEVEL_TRANSITION_FADE_DURATION
+                ? gs.introCutsceneFlashElapsed / LEVEL_TRANSITION_FADE_DURATION
+                : 1.0f - ((gs.introCutsceneFlashElapsed - LEVEL_TRANSITION_FADE_DURATION) / LEVEL_TRANSITION_FADE_DURATION);
             const Uint8 alpha = static_cast<Uint8>(SDL_clamp(fadeProgress, 0.0f, 1.0f) * 255.0f);
 
             SDL_SetRenderDrawBlendMode(state.renderer, SDL_BLENDMODE_BLEND);
@@ -1601,7 +1651,20 @@ void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float del
             .h = spriteSize
         };
 
-        SDL_FlipMode flipMode = obj.direction == 1 ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        SDL_FlipMode flipMode = SDL_FLIP_NONE;
+        if(obj.type == ObjectType::player)
+        {
+            const bool isMoving = obj.data.player.state == PlayerState::running
+                || obj.data.player.state == PlayerState::walking;
+            if(isMoving && obj.data.player.facing == PlayerFacing::east)
+            {
+                flipMode = SDL_FLIP_HORIZONTAL;
+            }
+        }
+        else if(obj.direction == 1)
+        {
+            flipMode = SDL_FLIP_HORIZONTAL;
+        }
 
         SDL_RenderTextureRotated(state.renderer, obj.texture, &src, &dst, 0, nullptr, flipMode);
 
@@ -1676,36 +1739,6 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
             obj.direction = currentDirection;
         }
 
-        switch(obj.data.player.state)
-        {
-            case PlayerState::idle:
-            {
-                if(currentDirection)
-                {
-                    obj.data.player.state = PlayerState::running;
-                    obj.texture = res.textureRun;
-                    obj.currentAnimation = res.ANIM_PLAYER_RUN;
-                }
-                break;
-            }
-            case PlayerState::running:
-            {
-                if(!currentDirection)
-                {
-                    obj.data.player.state = PlayerState::idle;
-                    obj.texture = res.textureIdle;
-                    obj.currentAnimation = res.ANIM_PLAYER_IDLE;
-                }
-                break;
-            }
-            case PlayerState::dialog:
-            {
-                obj.texture = res.textureIdle;
-                obj.currentAnimation = res.ANIM_PLAYER_IDLE;
-                break;
-            }
-        }
-
         // ---- Y axis: now move, then resolve Y collisions ----
         if (state.keys[SDL_SCANCODE_UP] && movementKeys == true)
         {
@@ -1752,28 +1785,62 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
         {
             obj.direction = Ydirection;
         }
-        switch(obj.data.player.state)
-        {
-            case PlayerState::idle:
-            {
-                if(Ydirection)
-                {
-                    obj.data.player.state = PlayerState::walking;
-                    obj.texture = res.textureRun;
-                    obj.currentAnimation = res.ANIM_PLAYER_RUN;
 
-                }
-                break;
-            }
-            case PlayerState::walking:
+        if(Ydirection > 0)
+        {
+            obj.data.player.facing = PlayerFacing::north;
+        }
+        else if(Ydirection < 0)
+        {
+            obj.data.player.facing = PlayerFacing::south;
+        }
+        else if(currentDirection > 0)
+        {
+            obj.data.player.facing = PlayerFacing::east;
+        }
+        else if(currentDirection < 0)
+        {
+            obj.data.player.facing = PlayerFacing::west;
+        }
+
+        const bool moving = currentDirection != 0 || Ydirection != 0;
+        if(obj.data.player.state == PlayerState::idle
+            || obj.data.player.state == PlayerState::running
+            || obj.data.player.state == PlayerState::walking)
+        {
+            if(moving)
             {
-                if(!Ydirection)
-                {
-                    obj.data.player.state = PlayerState::idle;
-                    obj.texture = res.textureIdle;
-                    obj.currentAnimation = res.ANIM_PLAYER_IDLE;
-                }
-                break;
+                obj.data.player.state = Ydirection ? PlayerState::walking : PlayerState::running;
+            }
+            else
+            {
+                obj.data.player.state = PlayerState::idle;
+            }
+        }
+
+        obj.currentAnimation = obj.data.player.state == PlayerState::running
+            || obj.data.player.state == PlayerState::walking
+            ? res.ANIM_PLAYER_RUN
+            : res.ANIM_PLAYER_IDLE;
+
+        if(obj.currentAnimation == res.ANIM_PLAYER_RUN)
+        {
+            switch(obj.data.player.facing)
+            {
+                case PlayerFacing::north: obj.texture = res.texturePlayerRunNorth; break;
+                case PlayerFacing::south: obj.texture = res.texturePlayerRunSouth; break;
+                case PlayerFacing::east:
+                case PlayerFacing::west: obj.texture = res.textureRun; break;
+            }
+        }
+        else
+        {
+            switch(obj.data.player.facing)
+            {
+                case PlayerFacing::north: obj.texture = res.texturePlayerIdleNorth; break;
+                case PlayerFacing::south: obj.texture = res.texturePlayerIdleSouth; break;
+                case PlayerFacing::east: obj.texture = res.texturePlayerIdleEast; break;
+                case PlayerFacing::west: obj.texture = res.texturePlayerIdleWest; break;
             }
         }
         //sprinting mechanic
@@ -1946,6 +2013,8 @@ void collisionResponse (const SDLState &state, GameState &gs, Resources &res,
                     {
                         gs.introCutscenetime = 0.0f;
                         gs.introCutsceneElapsed = 0.0f;
+                        gs.introCutsceneFlashing = true;
+                        gs.introCutsceneFlashElapsed = 0.0f;
                         gs.player().data.player.state = PlayerState::introCutscene;
                     }
                     break;
@@ -2433,7 +2502,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 case 13: //player
                 {
                     //create our player
-                    GameObject player = createObject(r, c, res.textureIdle, ObjectType::player);
+                    GameObject player = createObject(r, c, res.texturePlayerIdleSouth, ObjectType::player);
                     player.data.player = playerData();
                     player.animations = res.playerAnims;
                     player.currentAnimation = res.ANIM_PLAYER_IDLE;
@@ -2477,7 +2546,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 16:// Subject 1
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC1, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 2;
                     NPC.maxSpeedX = 50;
@@ -2491,7 +2560,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 17: // Subject 2
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC2, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 3;
                     NPC.maxSpeedX = 50;
@@ -2505,7 +2574,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 18: //subject 3
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC3, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 4;
                     NPC.maxSpeedX = 50;
@@ -2524,7 +2593,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
 
                 case 19: // subject 4
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC4, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 5;
                     NPC.maxSpeedX = 50;
@@ -2538,7 +2607,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 20: //subject 5
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC5, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 6;
                     NPC.maxSpeedX = 50;
@@ -2552,7 +2621,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 21://subject 6
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC6, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 7;
                     NPC.maxSpeedX = 50;
@@ -2571,7 +2640,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
 
                 case 22://subject 7
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC7, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 8;
                     NPC.maxSpeedX = 50;
@@ -2585,7 +2654,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 23://subject 8
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC8, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 9;
                     NPC.maxSpeedX = 50;
@@ -2599,7 +2668,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 24://subject 9
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC9, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 10;
                     NPC.maxSpeedX = 50;
@@ -2618,7 +2687,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
 
                 case 25://subject 10
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC10, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 11;
                     NPC.maxSpeedX = 50;
@@ -2632,7 +2701,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 26://subject 11
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC11, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 12;
                     NPC.maxSpeedX = 50;
@@ -2646,7 +2715,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 27://subject 12
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureNPC12, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 13;
                     NPC.maxSpeedX = 50;
@@ -3067,7 +3136,7 @@ void dialog(const SDLState &state, GameState &gs, const Resources &res)
             SDL_RenderDebugText(state.renderer, 155, 250, "Cam");
             SDL_RenderDebugText(state.renderer, 150, 270, characterSpeech[10][dialogLine].c_str());
             SDL_RenderDebugText(state.renderer, 150, 290, "a rash or anything like those sickos.");
-            SDL_RenderDebugText(state.renderer, 150, 310, "And what's up with the mark on your face?");
+            SDL_RenderDebugText(state.renderer, 150, 310, "And what's up with your face?");
             SDL_RenderDebugText(state.renderer, 405, 325, "Next(W) >>");
             break;
         }
@@ -3216,6 +3285,8 @@ void resetGame(const SDLState &state, GameState &gs, const Resources &res)
     gs.lvlswitching = false;
     gs.Lvltransition = 0.0f;
     gs.lvlMapSwitched = false;
+    gs.introCutsceneFlashing = false;
+    gs.introCutsceneFlashElapsed = 0.0f;
     gs.switchLvl = false;
     gs.introCS = 0.0f;
     gs.introCutsceneElapsed = 0.0f;
@@ -3538,7 +3609,7 @@ void playerChoice(SDLState &state, GameState &gs, float deltaTime)
     else if(gs.levelNum == 9 && ch.choice12)
     {
         SDL_RenderDebugText(state.renderer, 155, 270, "We hope you are right, mark on his face is");
-        SDL_RenderDebugText(state.renderer, 155, 290, "just like yours.");
+        SDL_RenderDebugText(state.renderer, 155, 290, "red as the symptoms says it should be.");
         gs.choiceElapsed += deltaTime;
 
         if(gs.choiceElapsed >= 3.0f)

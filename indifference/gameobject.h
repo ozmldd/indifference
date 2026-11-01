@@ -9,6 +9,11 @@ enum class PlayerState
     idle, running, cutscene, walking, dialog, ended, switchlvl, choice, introCutscene,
 };
 
+enum class PlayerFacing
+{
+    north, south, east, west,
+};
+
 enum class NPCState
 {
     dialog, following, standing,
@@ -26,9 +31,11 @@ enum class gameMode
 struct playerData
 {
     PlayerState state;
+    PlayerFacing facing;
     playerData()
     {
         state = PlayerState::idle;
+        facing = PlayerFacing::south;
     }
 };
 struct credittData
