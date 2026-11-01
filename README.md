@@ -58,7 +58,29 @@ Adjust the include and library paths to wherever you unpacked SDL3. `-Wall` is w
 keeping on — it catches uninitialized members and `=` vs `==` mistakes before they
 turn into an afternoon of debugging.
 
-The built executable needs the SDL3 DLLs beside it, plus the `assets/` folder.
+The direct `g++` development build above uses SDL DLLs beside the executable and
+reads assets from `assets/`. GitHub Actions builds a Windows release with SDL and
+SDL_image statically linked and assets embedded, so that download is a single
+executable. The release omits SDL_mixer because the game does not currently play
+audio.
+
+Every push to `main` uploads `indifference.exe` as the **indifference-windows**
+artifact in the workflow run. To publish a permanent download on the repository's
+Releases page, push a version tag such as `v1.0.0`.
+
+## Play on GitHub Pages
+
+The game can also run in a browser using Emscripten/WebAssembly. The workflow in
+`.github/workflows/pages.yml` builds the web version and deploys it whenever changes
+are pushed to `main`.
+
+To turn on hosting, open the repository's **Settings → Pages** and select
+**GitHub Actions** as the build and deployment source. After the first successful
+deployment, the game will be available at
+`https://ozmldd.github.io/indifference/`.
+
+Browser saves are stored in that browser's local storage. The web build loads the
+game's image assets with the page; no separate download is required.
 
 ## Project structure
 

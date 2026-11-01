@@ -1,0 +1,58 @@
+name: Build Windows executable
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure static release
+        run: >-
+          cmake -S indifference -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DINDIFFERENCE_EMBED_ASSETS=ON
+
+      - name: Build executable
+        run: cmake --build build --config Release --parallel
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          $exe = "build/Release/indifference.exe"
+          if (-not (Test-Path $exe)) {
+            throw "Build did not produce $exe"
+          }
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: indifference-windows
+          path: build/Release/indifference.exe
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download executable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: indifference-windows
+          path: dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/indifference.exe --generate-notes
