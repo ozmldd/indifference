@@ -1,12 +1,7 @@
 ﻿#include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
-#if !defined(__EMSCRIPTEN__) && !defined(INDIFFERENCE_NO_AUDIO)
 #include <SDL3_mixer/SDL_mixer.h>
-#endif
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
@@ -14,24 +9,8 @@
 #include <format>
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <cstdlib>
 #include <filesystem>
 #include "gameobject.h"
-#ifdef EMBED_ASSETS
-#include "assets_embedded.h"
-#endif
-
-#ifdef __EMSCRIPTEN__
-EM_JS(char *, readBrowserSave, (), {
-    const saved = localStorage.getItem("indifference.save");
-    return saved === null ? 0 : stringToNewUTF8(saved);
-});
-
-EM_JS(void, writeBrowserSave, (const char *save), {
-    localStorage.setItem("indifference.save", UTF8ToString(save));
-});
-#endif
 
                     #define SDL_BUTTON_LEFT     1
                     #define SDL_BUTTON_MIDDLE   2
@@ -195,13 +174,10 @@ struct Resources
     *textureNPC6, *textureNPC7, *textureNPC8, *textureNPC9, *textureNPC10, *textureNPC11, *textureNPC12, *texturedoorThing;
     
     //music stuffff
-#if !defined(__EMSCRIPTEN__) && !defined(INDIFFERENCE_NO_AUDIO)
     std::vector<MIX_Audio *> audioClips;
     MIX_Audio *audioMusic;
     MIX_Track *trackMusic;
-#endif
 
-#if !defined(__EMSCRIPTEN__) && !defined(INDIFFERENCE_NO_AUDIO)
     static const std::string &assetPath(const std::string &relativePath)
     {
         static const std::string basePath = []() -> std::string {
@@ -213,40 +189,16 @@ struct Resources
         full = basePath + relativePath;
         return full;
     }
-#endif
 
     SDL_Texture *loadTexture(SDL_Renderer *renderer, const std::string &filepath)
     {
-#ifdef EMBED_ASSETS
-        const EmbeddedAsset *asset = findEmbeddedAsset(filepath);
-        if (!asset)
-        {
-            SDL_Log("Embedded asset not found: %s", filepath.c_str());
-            return nullptr;
-        }
-
-        SDL_IOStream *io = SDL_IOFromConstMem(asset->data, asset->size);
-        if (!io)
-        {
-            SDL_Log("Failed to open embedded asset %s: %s", filepath.c_str(), SDL_GetError());
-            return nullptr;
-        }
-
-        SDL_Texture *texture = IMG_LoadTexture_IO(renderer, io, true);
-#else
+    //load texture
         SDL_Texture *texture = IMG_LoadTexture(renderer, filepath.c_str());
-#endif
-        if (!texture)
-        {
-            SDL_Log("Failed to load texture %s: %s", filepath.c_str(), SDL_GetError());
-            return nullptr;
-        }
         SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
         textures.push_back(texture);
         return texture;
     }
 
-#if !defined(__EMSCRIPTEN__) && !defined(INDIFFERENCE_NO_AUDIO)
     MIX_Audio *loadAudio(MIX_Mixer *mixer, const std::string &filepath)
     {
         MIX_Audio *audio = MIX_LoadAudio(mixer, assetPath(filepath).c_str(), false);
@@ -257,7 +209,6 @@ struct Resources
         audioClips.push_back(audio);
         return audio;
     }
-#endif
     
     void load(SDLState &state)
     {
@@ -329,12 +280,10 @@ struct Resources
         for (SDL_Texture *texture : textures){
             SDL_DestroyTexture(texture);
         }
-#if !defined(__EMSCRIPTEN__) && !defined(INDIFFERENCE_NO_AUDIO)
         MIX_DestroyTrack(trackMusic);
         for (MIX_Audio *audio : audioClips){
             MIX_DestroyAudio(audio);
         }
-#endif
     }
 };
 
@@ -1646,9 +1595,6 @@ int main (int argc, char *argv[])
         // swap buffers and present
         SDL_RenderPresent(state.renderer);
         prevTime = nowTime;
-#ifdef __EMSCRIPTEN__
-        emscripten_sleep(0);
-#endif
     }
     res.unload();
     cleanup(state);
@@ -3450,14 +3396,7 @@ void warning(const SDLState &state, GameState &gs, float deltaTime)
 }
 void save(const SDLState &state, GameState &gs)
 {
-#ifdef __EMSCRIPTEN__
-    std::ostringstream saved;
-    saved << gs.levelNum << '\n'
-          << static_cast<float>(gs.player().position.x) << '\n'
-          << static_cast<float>(gs.player().position.y) << '\n';
-    const std::string serialized = saved.str();
-    writeBrowserSave(serialized.c_str());
-#else
+    
     ofstream saveFile("saveData.txt");
     saveFile << gs.levelNum << '\n' << static_cast<float>(gs.player().position.x) << '\n' << static_cast<float>(gs.player().position.y) << '\n';
     saveFile.close();
@@ -3474,45 +3413,26 @@ void save(const SDLState &state, GameState &gs)
 
         std::ofstream out(savePath);
     }
-#endif
 }
 void readSave(const SDLState &state, GameState &gs, saveStuff &stf)
 {
-#ifdef __EMSCRIPTEN__
-    char *saved = readBrowserSave();
-    if (!saved)
-    {
-        std::cout << "couldn't open browser save\n";
-        return;
-    }
-    std::istringstream reading(saved);
-    std::free(saved);
-#else
+
     ifstream reading("saveData.txt");
     if (!reading)
     {
         std::cout << "couldn't open file\n";
         return; 
     }
-#endif
 
     std::getline(reading, stf.lvl);
     std::getline(reading, stf.pPosX);
     std::getline(reading, stf.pPosY);
+    reading.close();
 
 }
 bool checkForSave(const SDLState &state, GameState &gs)
 {
-#ifdef __EMSCRIPTEN__
-    char *saved = readBrowserSave();
-    if (!saved)
-    {
-        return false;
-    }
-    std::free(saved);
-    gs.saved = true;
-    return true;
-#else
+
     if(bool exists = std::filesystem::exists("saveData.txt"))
     {
         gs.saved = true;
@@ -3522,7 +3442,6 @@ bool checkForSave(const SDLState &state, GameState &gs)
     {
         return false;
     }
-#endif
 }
 void introCutscene(GameState &gs, float deltaTime)
 {     
