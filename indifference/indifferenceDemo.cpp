@@ -51,20 +51,29 @@ bool movementKeys = true;
 int dialogLine = 0;
 int touchingNPCId = -1;
 int activeNPCId = -1;
-const float SKIP_DELAY = 5.0f;
+const float SKIP_DELAY = 8.0f;
 bool title = true;
 const float FLASH_DURATION = 0.15f;
 constexpr float LEVEL_TRANSITION_FADE_DURATION = 0.25f;
 bool gameFin = false;
 bool response = false;
-std::string credits [6]
+std::array<std::string, 15> credits
 {
     "Thanks For Playing!",
     "Huge ShoutOut to Constref he was a huge help with his youtube tutorial",
     "and helping me learn SDL3, follow his Youtube and GitHub",
-    "gdfgdfgh",
-    "gdjgkljdflgjf",
-    "jfgkldjg",
+    "Shoutout Diego (itsmista_dlg) for the art on the MC and baseline for the NPCs",
+    "Another Huge shoutout to ceeBee(ceebee_do_thingies) for the crazy art on the",
+    "intro cutscene, came in clutch last second.",
+    "Shoutout Bro Code for teaching me c++ great video and helped alot.",
+    "I really hope you enjoyed this game took way too long, (91 hours to be exact)",
+    "I did all the coding in c++ and SDL3 (with a little help with AI sorry)",
+    "and I hope you enjoyed the game even though it's a bit short",
+    "Coder/developer: Chris(ozmld)",
+    "Game Director/designer: Diego",
+    "Artist: CeeBee and Diego",
+    "Tile and Map Designer: Chris",
+    "Dialog: Chris",
 };
 bool CSppl;
 
@@ -158,11 +167,11 @@ struct Resources
     std::vector<SDL_Texture *> textures;
     SDL_Texture *texturePlayerIdleNorth, *texturePlayerIdleSouth, *texturePlayerIdleEast, *texturePlayerIdleWest;
     SDL_Texture *texturePlayerRunNorth, *texturePlayerRunSouth;
-    SDL_Texture *textureButtonBack, *textureButtonNext, *textureButtonOptions, *textureButtonSave, *textureButtonStart;
-    SDL_Texture *textureRun, *textureAgentIdle, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureWoodFloor, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
+    SDL_Texture *textureButtonBack, *textureButtonNext, *textureButtonMenu, *textureButtonOptions, *textureButtonSave, *textureButtonStart;
+    SDL_Texture *textureRun, *textureAgentUp, *textureAgentIdle, *textureAgentIdleEast, *textureWood, *textureWoodBaseN, *textureWoodBaseS, *textureWoodBaseW, *textureWoodBaseE, *textureWoodFloor, *textureIdk, *textureEvent, *textureNPC, *textureButton, *textureBg2
     , *textureBg1, *textureSlider, *textureHandle, *textureMenu, *textureTransition, *textureStoneFloor, *textureWindowWatch, *textureCoolerWindow, *textureStoneWallA, *textureStoneWallC, *texturedoor
     ,*textureBed, *texturewallMirror, *textureIntroCutscene, *textureFlash, *textureNPC1, *textureNPC2, *textureNPC3, *textureNPC4,*textureNPC5,
-    *textureNPC6, *textureNPC7, *textureNPC8, *textureNPC9, *textureNPC10, *textureNPC11, *textureNPC12;
+    *textureNPC6, *textureNPC7, *textureNPC8, *textureNPC9, *textureNPC10, *textureNPC11, *textureNPC12, *texturedoorThing;
     
     //music stuffff
     std::vector<MIX_Audio *> audioClips;
@@ -207,7 +216,7 @@ struct Resources
         playerAnims[ANIM_PLAYER_IDLE] = Animation(1, 1.50f);
         playerAnims[ANIM_PLAYER_RUN] = Animation(4, .80f);
         AgentAnims.resize(3);
-        AgentAnims[ANIM_AGENT_WALK]= Animation(1, 1.0f);
+        AgentAnims[ANIM_AGENT_WALK]= Animation(4, 0.8f);
 
         texturePlayerIdleNorth = loadTexture(state.renderer, "assets/texture/idleN.png");
         texturePlayerIdleSouth = loadTexture(state.renderer, "assets/texture/idleS.png");
@@ -217,11 +226,14 @@ struct Resources
         texturePlayerRunSouth = loadTexture(state.renderer, "assets/texture/runningS.png");
         textureButtonBack = loadTexture(state.renderer, "assets/texture/btn_back.png");
         textureButtonNext = loadTexture(state.renderer, "assets/texture/btn_next.png");
+        textureButtonMenu = loadTexture(state.renderer, "assets/texture/btn_menu.png");
         textureButtonOptions = loadTexture(state.renderer, "assets/texture/btn_options.png");
         textureButtonSave = loadTexture(state.renderer, "assets/texture/btn_save.png");
         textureButtonStart = loadTexture(state.renderer, "assets/texture/btn_start.png");
         textureRun = loadTexture(state.renderer, "assets/texture/walking.png");
-        textureAgentIdle = loadTexture(state.renderer, "assets/texture/NPC.png");
+        textureAgentUp = loadTexture(state.renderer, "assets/texture/agent_up.png");
+        textureAgentIdle = loadTexture(state.renderer, "assets/texture/agent_idle_up.png");
+        textureAgentIdleEast = loadTexture(state.renderer, "assets/texture/agent_idle_east.png");
         textureWood = loadTexture(state.renderer, "assets/texture/wood.png");
         textureWoodBaseS = loadTexture(state.renderer, "assets/texture/base woodS.png");
         textureWoodBaseN = loadTexture(state.renderer, "assets/texture/base woodN.png");
@@ -260,9 +272,8 @@ struct Resources
         textureNPC10 = loadTexture(state.renderer, "assets/texture/NPC10.png");
         textureNPC11 = loadTexture(state.renderer, "assets/texture/NPC11.png");        
         textureNPC12 = loadTexture(state.renderer, "assets/texture/NPC12.png");
-        //this is to link music to the slider 
-        //MIX_SetTrackGain(res.trackMusic, slider.value);
-        //this is for music later
+        texturedoorThing = loadTexture(state.renderer, "assets/texture/door thing.png");
+
     }
     void unload()
     {
@@ -338,7 +349,7 @@ struct holder
         .x = 260, .y = 100,
         .w = 100, .h = 60,
     };
-    menuBack.texture = res.textureButtonNext;
+    menuBack.texture = res.textureButtonBack;
     menuBack.ButtonId = 21;
     gs.gameButtons.push_back(menuBack);
 
@@ -348,7 +359,7 @@ struct holder
         .x = 260, .y = 160,
         .w = 100, .h = 60,
     };
-    BTM.texture = res.textureButtonBack;
+    BTM.texture = res.textureButtonMenu;
     BTM.ButtonId = 22;
     gs.gameButtons.push_back(BTM);
 
@@ -894,6 +905,7 @@ int main (int argc, char *argv[])
                             }
                         }
                     }
+
                     }
                     if (gs.mode == gameMode::playing && gs.levelNum == 4
                         && gs.player().data.player.state == PlayerState::choice
@@ -1446,7 +1458,7 @@ int main (int argc, char *argv[])
             SDL_RenderDebugText(state.renderer, 175, 145, "Arrow keys - Move");
             SDL_RenderDebugText(state.renderer, 175, 175, "Z - Interact with characters");
             SDL_RenderDebugText(state.renderer, 175, 205, "W - Continue dialogue");
-            SDL_RenderDebugText(state.renderer, 175, 235, "Shift - Sprint");
+            SDL_RenderDebugText(state.renderer, 175, 235, "Hold Shift - Sprint");
 
             const SDL_FRect continueButton { 270, 275, 100, 60 };
             SDL_RenderTexture(state.renderer, res.textureButtonNext, nullptr, &continueButton);
@@ -1881,6 +1893,7 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                     }
                 }
             }
+
         }
 }
 
@@ -1939,6 +1952,22 @@ void update(const SDLState &state, GameState &gs, Resources &res, GameObject &ob
                     {
                         checkCollision(state, gs, res, obj, objB, deltaTime, false);
                     }
+                }
+            }
+
+            if (obj.data.NPC.NPCId <= 1)
+            {
+                const bool isFollowing = obj.data.NPC.state == NPCState::following
+                    && glm::length(obj.velocity) > 0.1f;
+                obj.currentAnimation = isFollowing ? res.ANIM_AGENT_WALK : -1;
+                if (isFollowing)
+                {
+                    obj.texture = res.textureAgentUp;
+                }
+                else
+                {
+                    obj.texture = gs.levelNum > 1 || obj.data.NPC.NPCId == 1
+                        ? res.textureAgentIdleEast : res.textureAgentIdle;
                 }
             }
         }
@@ -2090,7 +2119,7 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 3, 3, 3, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2518,9 +2547,12 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 14: //Agent A
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    SDL_Texture *idleTexture = gs.levelNum > 1
+                        ? res.textureAgentIdleEast : res.textureAgentIdle;
+                    GameObject NPC = createObject(r, c, idleTexture, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 0;
+                    NPC.animations = res.AgentAnims;
                     NPC.maxSpeedX = 50;
                     NPC.collider = 
                     {
@@ -2532,9 +2564,10 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                 }
                 case 15: //Agent B
                 {
-                    GameObject NPC = createObject(r, c, res.textureNPC, ObjectType::NPC);
+                    GameObject NPC = createObject(r, c, res.textureAgentIdleEast, ObjectType::NPC);
                     NPC.data.NPC = NPCData();
                     NPC.data.NPC.NPCId = 1;
+                    NPC.animations = res.AgentAnims;
                     NPC.maxSpeedX = 50;
                     NPC.collider = 
                     {
@@ -2754,15 +2787,21 @@ void createTiles(const SDLState &state, GameState &gs, const Resources &res,
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 35:
+                case 35://sick bed
                 {
                     GameObject o = createObject(r, c, res.textureBed, ObjectType::level);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
-                case 36:
+                case 36://lvl 1 mirror
                 {
                     GameObject o = createObject(r, c, res.texturewallMirror, ObjectType::level);
+                    gs.layers[LAYER_IDX_LEVEL].push_back(o);
+                    break;
+                }
+                case 37://intro door
+                {
+                    GameObject o = createObject(r, c, res.texturedoorThing, ObjectType::level);
                     gs.layers[LAYER_IDX_LEVEL].push_back(o);
                     break;
                 }
@@ -3231,12 +3270,12 @@ void Credits(const SDLState &state, GameState &gs, float scrollSpeed, float delt
     gs.creditsElapsed += deltaTime;
     movementKeys = false;
 
-    for(int s = 0; s < 6; s++)
+    for (size_t s = 0; s < credits.size(); s++)
     {
         SDL_SetRenderDrawColor(state.renderer, 255, 255, 255, 255);
         SDL_RenderDebugText(state.renderer, (state.logW - credits[s].size() * charW) / 2, gs.creditsY + (s * lineGap), credits[s].c_str());
     }
-    if (gs.creditsY + (5 * lineGap) + 50 < 0)
+    if (gs.creditsY + ((credits.size() - 1) * lineGap) + 50 < 0)
     {
         gs.creditsY = 340;
         movementKeys = true;
