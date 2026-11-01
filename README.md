@@ -2,9 +2,8 @@
 
 A 2D game written from scratch in C++ with SDL3.
 
-> Replace this line with a one- or two-sentence pitch — what the player is doing and
-> why it matters. The menu art and the chained opening scene set a bleak tone, so say
-> something about that.
+> A game me and my friend built just for fun and to challenge myself with my new coding
+> skills in c++. Simple story game on various different lessons
 
 ![Title screen](docs/title.png)
 
