@@ -93,18 +93,6 @@ lining up the moment the window is resized.
 
 Levels are 2D integer arrays, read tile by tile in `createTiles`:
 
-| Value | Tile |
-|---|---|
-| 0 | Empty |
-| 1 | Grass — solid |
-| 2 | Dirt — solid |
-| 3 | Background tile — drawn behind everything, no collider |
-| 4 | Player spawn |
-| 5 | Event block — triggers a cutscene / level change |
-| 6 | NPC, id 0 |
-| 7 | NPC, id 1 |
-| 8 | End block — rolls the credits |
-
 To add a level, add a `case` to the `createTiles` switch and point it at the new map
 array. Every value needs its own case — a missing one falls through to `default` and
 silently loads level 1 instead.
