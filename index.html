@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indifference</title>
+<meta name="description" content="A 2D story game written from scratch in C++ with SDL3.">
+<style>
+  :root {
+    --bg-top:#0e1a1a; --bg-bot:#1e3432; --panel:#162826;
+    --line:#40615b; --edge:#60766f;
+    --text:#e2ddcd; --dim:#8f9289; --accent:#9fd3c7;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:0;
+    background:linear-gradient(180deg,var(--bg-top),var(--bg-bot)) fixed;
+    color:var(--text);
+    font:16px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .wrap { max-width:820px; margin:0 auto; padding:0 16px 80px; }
+  header { text-align:center; padding:64px 0 40px; }
+  h1 {
+    margin:0 0 12px; font-size:clamp(32px,8vw,60px); letter-spacing:.14em;
+    font-weight:700;
+  }
+  .tagline { color:var(--dim); margin:0 0 32px; }
+  .download {
+    display:inline-block; padding:14px 30px; margin:8px 0 6px;
+    background:#26403c; color:var(--text); text-decoration:none;
+    border:2px solid var(--edge); font-weight:700; letter-spacing:.06em;
+  }
+  .download:hover { background:#31524c; }
+  .note { color:var(--dim); font-size:13px; margin:10px 0 0; }
+  h2 {
+    margin:48px 0 14px; font-size:20px; letter-spacing:.1em;
+    border-bottom:1px solid var(--line); padding-bottom:8px;
+  }
+  ul { padding-left:20px; }
+  li { margin:4px 0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+  th,td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); }
+  th { color:var(--accent); font-weight:700; }
+  pre {
+    background:var(--panel); border:1px solid var(--line);
+    padding:14px; overflow-x:auto; font-size:13px; line-height:1.5;
+  }
+  code { color:var(--accent); }
+  pre code { color:var(--text); }
+  a { color:var(--accent); }
+  .warn { border-left:3px solid var(--edge); padding:4px 0 4px 14px; color:var(--dim); }
+  footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--line);
+           color:var(--dim); font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>INDIFFERENCE</h1>
+  <p class="tagline">A 2D story game written from scratch in C++ with SDL3.</p>
+
+  <!-- Keep this filename identical on every release and the link never needs updating -->
+  <a class="download"
+     href="https://github.com/ozmldd/indifference/releases/latest/download/indifference-windows.zip">
+    &#x2B07; Download for Windows
+  </a>
+  <p class="note">
+    Unsigned build &mdash; Windows will show &ldquo;Windows protected your PC.&rdquo;
+    Click <strong>More info</strong> &rarr; <strong>Run anyway</strong>.
+  </p>
+  <p class="note"><a href="https://github.com/ozmldd/indifference">Source on GitHub</a></p>
+</header>
+
+<h2>ABOUT</h2>
+<p>
+  <!-- TODO: replace with your own text -->
+  A simple story game, built for fun and to practise C++. No engine and no framework &mdash;
+  the game loop, collision, camera and menus are all written by hand on top of SDL3.
+</p>
+
+<h2>FEATURES</h2>
+<ul>
+  <li>Hand-rolled game loop with delta-time movement</li>
+  <li>Two-pass axis-separated collision with a float epsilon for grazing contacts</li>
+  <li>Held-button jumping, so bunny hopping chains naturally</li>
+  <li>Tile-based levels, switchable at runtime</li>
+  <li>NPC dialogue with per-character lines and word wrap</li>
+  <li>Title screen, options menu with a volume slider, and a pause menu</li>
+  <li>Save and load &mdash; level and position persist between sessions</li>
+  <li>Scrolling end credits and an epilepsy warning screen</li>
+  <li>Debug overlay drawing colliders and state</li>
+</ul>
+
+<h2>CONTROLS</h2>
+<table>
+  <tr><th>Input</th><th>Action</th></tr>
+  <tr><td>A / D</td><td>Move</td></tr>
+  <tr><td>Space (hold)</td><td>Jump &mdash; hold to bunny hop</td></tr>
+  <!-- TODO: fill in sprint, interact, skip dialogue, skip credits, debug toggle -->
+  <tr><td>Mouse</td><td>Menus and volume slider</td></tr>
+</table>
+
+<h2>BUILDING</h2>
+<p>Needs a C++17 compiler, SDL3, SDL3_image, SDL3_mixer (3.x) and GLM.</p>
+<pre><code>g++ -std=c++17 -Wall gametest.cpp -o indifference.exe \
+    -I"path/to/SDL3/include" -I"path/to/glm" \
+    -L"path/to/SDL3/lib" \
+    -lSDL3 -lSDL3_image -lSDL3_mixer</code></pre>
+<p class="warn">
+  SDL3_mixer 3.x is a full API redesign from 2.x &mdash; the 2.x snippets you find
+  online will not compile against it.
+</p>
+
+<h2>LEVEL FORMAT</h2>
+<p>Levels are 2D integer arrays, read tile by tile in <code>createTiles</code>.</p>
+<table>
+  <tr><th>Value</th><th>Tile</th></tr>
+  <tr><td>0</td><td>Empty</td></tr>
+  <tr><td>1</td><td>Grass &mdash; solid</td></tr>
+  <tr><td>2</td><td>Dirt &mdash; solid</td></tr>
+  <tr><td>3</td><td>Background tile, no collider</td></tr>
+  <tr><td>4</td><td>Player spawn</td></tr>
+  <tr><td>5</td><td>Event block &mdash; cutscene / level change</td></tr>
+  <tr><td>6, 7</td><td>NPCs</td></tr>
+  <tr><td>8</td><td>End block &mdash; rolls the credits</td></tr>
+</table>
+
+<h2>CREDITS</h2>
+<p>
+  <!-- TODO: collaborator names, and the asset attribution from CREDITS.txt -->
+  Art and audio come from several sources under different terms. Full attribution
+  ships with the game in <code>CREDITS.txt</code>.
+</p>
+
+<h2>AI USAGE</h2>
+<p>
+  <!-- TODO: keep your existing disclosure text here -->
+</p>
+
+<footer>Built with SDL3.</footer>
+
+</div>
+</body>
+</html>
