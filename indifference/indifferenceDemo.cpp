@@ -11,6 +11,11 @@
 #include <fstream>
 #include <filesystem>
 #include "gameobject.h"
+#include <windows.h>
+#include <objbase.h>
+
+
+
 
                     #define SDL_BUTTON_LEFT     1
                     #define SDL_BUTTON_MIDDLE   2
@@ -277,21 +282,30 @@ struct Resources
         textureNPC11 = loadTexture(state.renderer, "assets/texture/NPC11.png");        
         textureNPC12 = loadTexture(state.renderer, "assets/texture/NPC12.png");
         texturedoorThing = loadTexture(state.renderer, "assets/texture/door thing.png");
-        audioMenuMusic = loadAudio(state.mixer, "assets/audio/Menu.wav");
-        trackMenuMusic = MIX_CreateTrack(state.mixer);
-        if (!trackMenuMusic)
+        if (state.mixer)
         {
-            std::cerr << "Failed to create menu music track: " << SDL_GetError() << '\n';
-        }
-        else if (audioMenuMusic
-            && MIX_SetTrackAudio(trackMenuMusic, audioMenuMusic)
-            && MIX_SetTrackLoops(trackMenuMusic, -1))
-        {
-            menuMusicReady = true;
+            audioMenuMusic = loadAudio(state.mixer, "assets/audio/Menu.wav");
+            trackMenuMusic = MIX_CreateTrack(state.mixer);
+            if (!trackMenuMusic)
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+                    "Failed to create menu music track: %s", SDL_GetError());
+            }
+            else if (audioMenuMusic
+                && MIX_SetTrackAudio(trackMenuMusic, audioMenuMusic))
+            {
+                menuMusicReady = true;
+            }
+            else
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+                    "Failed to configure menu music: %s", SDL_GetError());
+            }
         }
         else
         {
-            std::cerr << "Failed to configure menu music: " << SDL_GetError() << '\n';
+            SDL_LogWarn(SDL_LOG_CATEGORY_AUDIO,
+                "Menu music is disabled because no audio device is available.");
         }
 
     }
@@ -311,24 +325,25 @@ void updateVolumeSlider(GameState &gs, Resources &res, float mouseX)
 {
     Slider &slider = gs.slider[0];
     Handle &handle = gs.handles[0];
-    const float handleTravel = slider.slide.w - handle.handler.w;
+    const float sliderStart = slider.slide.x - 25.0f;
+    const float handleTravel = slider.slide.w - handle.handler.w + 50.0f;
     if (handleTravel <= 0.0f)
     {
         slider.value = 0.0f;
-        handle.handler.x = slider.slide.x;
+        handle.handler.x = sliderStart;
     }
     else
     {
         handle.handler.x = SDL_clamp(
             mouseX - gs.sliderDragOffsetX,
-            slider.slide.x,
-            slider.slide.x + handleTravel);
-        slider.value = (handle.handler.x - slider.slide.x) / handleTravel;
+            sliderStart,
+            sliderStart + handleTravel);
+        slider.value = (handle.handler.x - sliderStart) / handleTravel;
     }
 
     if (res.menuMusicReady && !MIX_SetTrackGain(res.trackMenuMusic, slider.value))
     {
-        std::cerr << "Failed to set menu music volume: " << SDL_GetError() << '\n';
+        SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Failed to set menu music volume: %s", SDL_GetError());
     }
 }
 
@@ -344,14 +359,18 @@ void updateMenuMusic(const GameState &gs, const Resources &res)
     {
         if (!MIX_PlayTrack(res.trackMenuMusic, 0))
         {
-            std::cerr << "Failed to play menu music: " << SDL_GetError() << '\n';
+            SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Failed to play menu music: %s", SDL_GetError());
+        }
+        else if (!MIX_SetTrackLoops(res.trackMenuMusic, -1))
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Failed to loop menu music: %s", SDL_GetError());
         }
     }
     else if (!inMenu && MIX_TrackPlaying(res.trackMenuMusic))
     {
         if (!MIX_StopTrack(res.trackMenuMusic, 0))
         {
-            std::cerr << "Failed to stop menu music: " << SDL_GetError() << '\n';
+            SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Failed to stop menu music: %s", SDL_GetError());
         }
     }
 }
@@ -1704,11 +1723,53 @@ bool initialize(SDLState &state)
     }
     state.mixerInitialized = true;
     state.mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+    if (state.mixer)
+    {
+        SDL_Log("Audio output initialized with SDL driver '%s'.",
+            SDL_GetCurrentAudioDriver());
+    }
+
     if (!state.mixer)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
-        cleanup(state);
-        return false;
+        const std::string firstError = SDL_GetError();
+        SDL_LogWarn(SDL_LOG_CATEGORY_AUDIO,
+            "Default audio output failed: %s. Trying other available drivers.",
+            firstError.c_str());
+
+        const char *requestedDriver = SDL_GetHint(SDL_HINT_AUDIO_DRIVER);
+        const int driverCount = SDL_GetNumAudioDrivers();
+        for (int i = 0; i < driverCount && !state.mixer; ++i)
+        {
+            const char *driver = SDL_GetAudioDriver(i);
+            if (!driver || SDL_strcmp(driver, "disk") == 0
+                || SDL_strcmp(driver, "dummy") == 0
+                || (requestedDriver && SDL_strcmp(driver, requestedDriver) == 0))
+            {
+                continue;
+            }
+
+            if (!SDL_SetHintWithPriority(
+                    SDL_HINT_AUDIO_DRIVER, driver, SDL_HINT_OVERRIDE))
+            {
+                SDL_LogWarn(SDL_LOG_CATEGORY_AUDIO,
+                    "Could not select SDL audio driver '%s'.", driver);
+                continue;
+            }
+
+            SDL_QuitSubSystem(SDL_INIT_AUDIO);
+            state.mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+            if (state.mixer)
+            {
+                SDL_Log("Audio output initialized with fallback SDL driver '%s'.",
+                    SDL_GetCurrentAudioDriver());
+            }
+        }
+    }
+
+    if (!state.mixer)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+            "No audio output is available. The game will continue without music.");
     }
     //create the window
     state.window = SDL_CreateWindow("Indifference", state.width, state.height, SDL_WINDOW_RESIZABLE);
