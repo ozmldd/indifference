@@ -24,3 +24,7 @@ Thank you to Constref for helping me learn SDL3 through his YouTube video, witho
 Amazing video and really helpful follow him please
 Thank you to my friend Diego (itsmista_dlg) for doing the MC sprites and directing the game
 Big shout out to CeeBee(ceebee_do_thingies) for the art for the intro cut scene came in clutch big time and amazing art.
+
+## resources i used (if you're interested)
+I used SDL3 for most of the game, I used c++ and the built in file library for the save state to create a text file which the game reads every time it loads up (probably my favorite part)
+and i used GLM for some vector stuff. Check out Constref for more info on SDL3 and other cool gaming stuff.
