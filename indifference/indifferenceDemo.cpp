@@ -29,11 +29,13 @@ using namespace std;
 
 struct SDLState
 {
-    SDL_Window *window;
-    SDL_Renderer *renderer;
+    SDL_Window *window = nullptr;
+    SDL_Renderer *renderer = nullptr;
+    MIX_Mixer *mixer = nullptr;
     int width, height, logW, logH;
     const bool *keys;
     bool fullscreen;
+    bool mixerInitialized = false;
 
     SDLState() : keys(SDL_GetKeyboardState(nullptr))
     {
@@ -103,6 +105,7 @@ struct GameState
     bool startNewGame = false;
     string read;
     std::string playerName;
+    float sliderDragOffsetX = 0.0f;
     SDL_FRect mapViewport;
     float mapScale = 1.0f;
     gameMode mode;
@@ -175,8 +178,9 @@ struct Resources
     
     //music stuffff
     std::vector<MIX_Audio *> audioClips;
-    MIX_Audio *audioMusic;
-    MIX_Track *trackMusic;
+    MIX_Audio *audioMenuMusic = nullptr;
+    MIX_Track *trackMenuMusic = nullptr;
+    bool menuMusicReady = false;
 
     static const std::string &assetPath(const std::string &relativePath)
     {
@@ -273,6 +277,22 @@ struct Resources
         textureNPC11 = loadTexture(state.renderer, "assets/texture/NPC11.png");        
         textureNPC12 = loadTexture(state.renderer, "assets/texture/NPC12.png");
         texturedoorThing = loadTexture(state.renderer, "assets/texture/door thing.png");
+        audioMenuMusic = loadAudio(state.mixer, "assets/audio/Menu.wav");
+        trackMenuMusic = MIX_CreateTrack(state.mixer);
+        if (!trackMenuMusic)
+        {
+            std::cerr << "Failed to create menu music track: " << SDL_GetError() << '\n';
+        }
+        else if (audioMenuMusic
+            && MIX_SetTrackAudio(trackMenuMusic, audioMenuMusic)
+            && MIX_SetTrackLoops(trackMenuMusic, -1))
+        {
+            menuMusicReady = true;
+        }
+        else
+        {
+            std::cerr << "Failed to configure menu music: " << SDL_GetError() << '\n';
+        }
 
     }
     void unload()
@@ -280,12 +300,61 @@ struct Resources
         for (SDL_Texture *texture : textures){
             SDL_DestroyTexture(texture);
         }
-        MIX_DestroyTrack(trackMusic);
+        MIX_DestroyTrack(trackMenuMusic);
         for (MIX_Audio *audio : audioClips){
             MIX_DestroyAudio(audio);
         }
     }
 };
+
+void updateVolumeSlider(GameState &gs, Resources &res, float mouseX)
+{
+    Slider &slider = gs.slider[0];
+    Handle &handle = gs.handles[0];
+    const float handleTravel = slider.slide.w - handle.handler.w;
+    if (handleTravel <= 0.0f)
+    {
+        slider.value = 0.0f;
+        handle.handler.x = slider.slide.x;
+    }
+    else
+    {
+        handle.handler.x = SDL_clamp(
+            mouseX - gs.sliderDragOffsetX,
+            slider.slide.x,
+            slider.slide.x + handleTravel);
+        slider.value = (handle.handler.x - slider.slide.x) / handleTravel;
+    }
+
+    if (res.menuMusicReady && !MIX_SetTrackGain(res.trackMenuMusic, slider.value))
+    {
+        std::cerr << "Failed to set menu music volume: " << SDL_GetError() << '\n';
+    }
+}
+
+void updateMenuMusic(const GameState &gs, const Resources &res)
+{
+    if (!res.menuMusicReady)
+    {
+        return;
+    }
+
+    const bool inMenu = gs.mode == gameMode::title || gs.mode == gameMode::optionMenu;
+    if (inMenu && !MIX_TrackPlaying(res.trackMenuMusic))
+    {
+        if (!MIX_PlayTrack(res.trackMenuMusic, 0))
+        {
+            std::cerr << "Failed to play menu music: " << SDL_GetError() << '\n';
+        }
+    }
+    else if (!inMenu && MIX_TrackPlaying(res.trackMenuMusic))
+    {
+        if (!MIX_StopTrack(res.trackMenuMusic, 0))
+        {
+            std::cerr << "Failed to stop menu music: " << SDL_GetError() << '\n';
+        }
+    }
+}
 
 struct saveStuff
 {
@@ -785,15 +854,9 @@ int main (int argc, char *argv[])
                 {
                     if(gs.mode == gameMode::optionMenu || gs.mode == gameMode::paused)
                     {
-                        //volume slider for ingame and settings
                         if (gs.dragging)
                         {
-                            Slider &s = gs.slider[0];
-                            float value = ((event.motion.x+20) - (s.slide.x+20)) / s.slide.w;
-                            s.value = SDL_clamp(value, 0.0f, 1.0f);
-
-                            Handle &h = gs.handles[0];
-                            h.handler.x = -25+s.slide.x + s.value * (s.slide.w - h.handler.w + 50);
+                            updateVolumeSlider(gs, res, event.motion.x);
                         }
                     }
                     break;
@@ -808,13 +871,18 @@ int main (int argc, char *argv[])
 
                     if(gs.mode == gameMode::optionMenu || gs.mode == gameMode::paused)
                     {
-                        //slider things
-                        for (Handle &h : gs.handles)
+                        Slider &slider = gs.slider[0];
+                        Handle &handle = gs.handles[0];
+                        if (SDL_PointInRectFloat(&click, &handle.handler))
                         {
-                            if (SDL_PointInRectFloat(&click, &h.handler))
-                            {
-                                gs.dragging = true;
-                            }
+                            gs.dragging = true;
+                            gs.sliderDragOffsetX = click.x - handle.handler.x;
+                        }
+                        else if (SDL_PointInRectFloat(&click, &slider.slide))
+                        {
+                            gs.dragging = true;
+                            gs.sliderDragOffsetX = handle.handler.w / 2.0f;
+                            updateVolumeSlider(gs, res, click.x);
                         }
                     }
                     //im the for loop that checks if it's pressed
@@ -936,6 +1004,8 @@ int main (int argc, char *argv[])
         }
 
         //event loop ended !                                                                                                            //
+
+        updateMenuMusic(gs, res);
 
         //other things started                                                                                                          //
         
@@ -1603,42 +1673,66 @@ int main (int argc, char *argv[])
 
 void cleanup(SDLState &state)
 {
+    if (state.mixer)
+    {
+        MIX_DestroyMixer(state.mixer);
+        state.mixer = nullptr;
+    }
+    if (state.mixerInitialized)
+    {
+        MIX_Quit();
+        state.mixerInitialized = false;
+    }
     SDL_DestroyRenderer(state.renderer);
+    state.renderer = nullptr;
     SDL_DestroyWindow(state.window);
+    state.window = nullptr;
     SDL_Quit();
 }
 bool initialize(SDLState &state)
 {
-    bool success = true;
-
     if(!SDL_Init(SDL_INIT_VIDEO))
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "ERROR INTIALIZING SDL", nullptr);
-        success = false;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
+        return false;
+    }
+    if (!MIX_Init())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
+        cleanup(state);
+        return false;
+    }
+    state.mixerInitialized = true;
+    state.mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+    if (!state.mixer)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
+        cleanup(state);
+        return false;
     }
     //create the window
     state.window = SDL_CreateWindow("Indifference", state.width, state.height, SDL_WINDOW_RESIZABLE);
     if(!state.window)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "ERROR CREATING WINDOW", nullptr);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
         cleanup(state);
-        success = false;
+        return false;
     }
 
     //create the renderer
     state.renderer = SDL_CreateRenderer(state.window, nullptr);
     if(!state.renderer)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "ERROR CREATING RENDERER", nullptr);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", SDL_GetError(), nullptr);
         cleanup(state);
-        success = false;
+        return false;
     }
     SDL_SetRenderVSync(state.renderer, 1);
 
     //configure presenatation
 
     SDL_SetRenderLogicalPresentation(state.renderer, state.logW, state.logH, SDL_LOGICAL_PRESENTATION_OVERSCAN);
-    return success;
+    return true;
 }
 void drawObject(const SDLState &state, GameState &gs, GameObject &obj, float deltaTime)
 {
